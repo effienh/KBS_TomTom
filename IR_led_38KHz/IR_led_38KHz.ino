@@ -2,9 +2,76 @@
 #include <Arduino.h>
 #include <avr/interrupt.h>
 
+int counter1 = 0;
+int counter2 = 0;
+int positie = 7;
+int sent = 0;
+
+uint8_t bytje = 0b00000000;
+
+
 ISR(TIMER2_COMPA_vect)
 {
-  PORTD ^= (1<<PORTD3);
+  if(~(bytje |~(1 << positie)))
+  {
+    if(counter1 < 10)
+    {
+      counter1++;
+      PORTD ^= (1<<PORTD3);
+    }
+    
+    if(counter1 == 10)
+    {
+      sent = 1;
+    }
+  
+    if(sent)
+    {
+      counter2++;
+      PORTD &= ~(1<<PORTD3);
+    }
+    
+    if(counter2 == 10)
+    {
+      counter1 = 0;
+      counter2 = 0;
+      positie--;
+      sent = 0;
+    }
+  }else
+  {
+    if(counter1 < 10)
+    {
+      counter1++;
+      PORTD ^= (1<<PORTD3);
+    }
+    
+    if(counter1 == 10)
+    {
+      sent = 1;
+    }
+    
+    if(sent)
+    {
+      counter2++;
+      PORTD &= ~(1<<PORTD3);
+    }
+    
+    if(counter2 == 30)
+    {
+      Serial.println(counter1);
+      Serial.println(counter2);
+      counter2 = 0;
+      counter1 = 0;
+      positie--;
+      sent = 0;
+    }
+  }
+  
+  if(positie == -1)
+  {
+    positie = 2;
+  }
 }
 
 void timer2_setup();
@@ -15,6 +82,7 @@ int main()
   init();
   timer2_setup();
   IR_led_setup();
+  Serial.begin(9600);
   sei();
 
   while(1)
