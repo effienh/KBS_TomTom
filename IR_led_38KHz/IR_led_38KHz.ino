@@ -2,6 +2,8 @@
 #include <Arduino.h>
 #include <avr/interrupt.h>
 
+//dikke lul
+
 int counter1 = 0;
 int counter2 = 0;
 int positie = 7;
