@@ -7,7 +7,7 @@ int counter2 = 0;
 int positie = 7;
 int sent = 0;
 
-uint8_t bytje = 0b00000001;
+uint8_t bytje = 0b00000000;
 
 
 ISR(TIMER2_COMPA_vect)
@@ -68,7 +68,7 @@ ISR(TIMER2_COMPA_vect)
   
   if(positie == -1)
   {
-    positie = 2;
+    positie = 7;
   }
 }
 
