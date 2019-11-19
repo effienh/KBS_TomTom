@@ -7,7 +7,7 @@ int counter2 = 0;
 int positie = 7;
 int sent = 0;
 
-uint8_t bytje = 0b00000000;
+uint8_t bytje = 0b00000001;
 
 
 ISR(TIMER2_COMPA_vect)
@@ -59,8 +59,6 @@ ISR(TIMER2_COMPA_vect)
     
     if(counter2 == 30)
     {
-      Serial.println(counter1);
-      Serial.println(counter2);
       counter2 = 0;
       counter1 = 0;
       positie--;
@@ -82,7 +80,6 @@ int main()
   init();
   timer2_setup();
   IR_led_setup();
-  Serial.begin(9600);
   sei();
 
   while(1)
