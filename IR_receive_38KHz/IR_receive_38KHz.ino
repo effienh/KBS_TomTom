@@ -24,7 +24,6 @@ ISR(INT1_vect)
   if(falling_edge)
   {
     prev_counter = counter;
-    Serial.println(prev_counter);
     falling_edge = 0;
   }else if(falling_edge == 0)
   {
@@ -38,7 +37,6 @@ ISR(INT1_vect)
 int main()
 {
   init();
-  Serial.begin(38400);
   setup_pin3();
   timer2_setup();
   PCINT1_setup();
@@ -64,7 +62,7 @@ void timer2_setup()
   // set compare match register for 37735.84905660377 Hz increments
   OCR2A = 52; // = 16000000 / (8 * 37735.84905660377) - 1 (must be <256)
   // turn on CTC mode
-  TCCR2B |= (1 << WGM21);
+  TCCR2A |= (1 << WGM21);
   // Set CS22, CS21 and CS20 bits for 8 prescaler
   TCCR2B |= (1 << CS22) | (1 << CS21) | (0 << CS20);
   // enable timer compare interrupt
