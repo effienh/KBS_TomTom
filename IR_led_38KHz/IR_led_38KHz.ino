@@ -8,6 +8,9 @@ int sent = 0;
 
 uint8_t bytje = 0b111111111;
 
+void timer2_setup();
+void IR_led_setup();
+
 ISR(TIMER2_COMPA_vect)
 {
   if(~(bytje |~(1 << positie)))
@@ -69,10 +72,6 @@ ISR(TIMER2_COMPA_vect)
     positie = 7;
   }
 }
-
-
-void timer2_setup();
-void IR_led_setup();
 
 int main()
 {
