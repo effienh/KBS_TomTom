@@ -1,5 +1,4 @@
 #include <avr/io.h>
-#include <Arduino.h>
 #include <avr/interrupt.h>
 
 int counter = 0;
