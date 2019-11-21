@@ -6,22 +6,22 @@ int counter2 = 0;
 int positie = 7;
 int sent = 0;
 
-uint8_t bytje = 0b111111111;
+uint8_t bytje = 0b01001101;
 
 void timer2_setup();
 void IR_led_setup();
 
 ISR(TIMER2_COMPA_vect)
-{
+{ 
   if(~(bytje |~(1 << positie)))
   {
-    if(counter1 < 1000)
+    if(counter1 < 100)
     {
       counter1++;
       PORTD ^= (1<<PORTD3);
     }
     
-    if(counter1 >= 1000)
+    if(counter1 >= 100)
     {
       sent = 1;
     }
@@ -32,7 +32,7 @@ ISR(TIMER2_COMPA_vect)
       PORTD &= ~(1<<PORTD3);
     }
     
-    if(counter2 >= 1000)
+    if(counter2 >= 100)
     {
       counter1 = 0;
       counter2 = 0;
@@ -41,13 +41,13 @@ ISR(TIMER2_COMPA_vect)
     }
   }else
   {
-    if(counter1 < 1000)
+    if(counter1 < 100)
     {
       counter1++;
       PORTD ^= (1<<PORTD3);
     }
     
-    if(counter1 >= 1000)
+    if(counter1 >= 100)
     {
       sent = 1;
     }
@@ -58,7 +58,7 @@ ISR(TIMER2_COMPA_vect)
       PORTD &= ~(1<<PORTD3);
     }
     
-    if(counter2 >= 3000)
+    if(counter2 >= 300)
     {
       counter1 = 0;
       counter2 = 0;
@@ -77,6 +77,7 @@ int main()
 {
   timer2_setup();
   IR_led_setup();
+  Serial.begin(9600);
   sei();
 
   while(1)
