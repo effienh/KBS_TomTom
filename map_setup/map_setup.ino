@@ -12,12 +12,12 @@
 #define SD_CS   4 // SD card select pin
 #define TFT_CS 10 // TFT select pin
 #define TFT_DC  9 // TFT display/command pin
-
+  
 SdFat                SD;         // SD card filesystem
 Adafruit_ImageReader reader(SD); // Image-reader object, pass in SD filesys
 
 
-Adafruit_ILI9341     tft    = Adafruit_ILI9341(TFT_CS, TFT_DC);
+Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC);
 
 
 void setup(void)
@@ -35,6 +35,7 @@ void setup(void)
   // Notice the 'reader' object performs this, with 'tft' as an argument.
   
   stat = reader.drawBMP("/map.bmp", tft, 0, 0);
+  
 }
 
 void loop() 
