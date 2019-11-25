@@ -1,15 +1,16 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
-int counter;
-int prev_counter;
-int current_counter;
+int counter = 0;
+int prev_counter = 0;
+int current_counter = 0;
 int difference_counters = 0;
 int count_interrupts = 0;
 int bit_positie = 7;
 int falling_edge = 1;
+int new_data = 1;
 
-uint8_t data_byte;
+uint8_t data_byte = 0;
 
 void timer2_setup();
 void PCINT1_setup();
@@ -18,12 +19,32 @@ void setup_pin3();
 ISR(TIMER2_COMPA_vect)
 {
   counter++;
+
+  if(counter > 700 && new_data)
+  {
+    for(int i = bit_positie; i>=0; i--)
+    {
+      data_byte &= ~(1<<i);
+    }
+    bit_positie = 7;
+    data_byte = 0;
+    new_data = 0;
+  }
 }
 
 ISR(INT1_vect)
 {
+  if(bit_positie < 0)
+  {
+    Serial.println(data_byte);
+    new_data = 1;
+    data_byte = 0;
+    bit_positie = 7;
+  }
+  
   count_interrupts++;
   EICRA ^= (1<<ISC10);
+  
   if(falling_edge)
   {
     prev_counter = counter;
@@ -35,27 +56,22 @@ ISR(INT1_vect)
     difference_counters = current_counter - prev_counter;
     counter = 0;
   }
-
-  if(bit_positie < 0)
-  {
-    bit_positie = 7;
-    data_byte = 0;
-  }
-    
+   
   if(difference_counters >= 290 && difference_counters <= 390 && (count_interrupts%2 == 0)) //is 1
   {
     data_byte |= (1<<bit_positie);
     count_interrupts = 0;
     bit_positie--;
-    Serial.print(1);
+    //Serial.print(1);
   }else if(difference_counters <= 200 && difference_counters >= 100 && (count_interrupts%2==0)) //is 0
   {
     data_byte &= ~(1<<bit_positie);
     count_interrupts = 0;
     bit_positie--;
-    Serial.print(0);
+    //Serial.print(0);
   }
 }
+
 
 int main()
 {
