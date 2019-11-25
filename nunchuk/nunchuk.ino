@@ -12,6 +12,8 @@
 #include <Nunchuk.h>
 #include <Wire.h>
 
+#include <avr/interrupt.h>
+
 #define USE_SD_CARD
 
 int BORDER_UP = 203;
@@ -32,12 +34,12 @@ Adafruit_ImageReader reader(SD); // Image-reader object, pass in SD filesys
 
 Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC);
 
+void setup_timer1();
 
 int y_waarde = 128;
 int x_waarde = 128;
 
-int deadzone = 0;
-int prev_state = 0;
+int flag = 0;
 
 int y_bom;
 int x_bom;
@@ -50,19 +52,33 @@ void setupWire()
   init();
   nunchuk_init();
 }
+/*
+ISR(TIMER1_COMPA_vect)
+{
+ if(flag == 0)
+ {
+  flag = 1; 
+ } else if(flag == 1)
+ {
+  flag = 0;
+ }
+}
+*/
 
 void setup(void)
 {
-  
   tft.begin();          // Initialize screen
   SD.begin(SD_CS, SD_SCK_MHZ(25));
-  setupWire();
-  
+  setupWire();  
+  setup_timer1();
+  sei();
 }
 
 void loop() 
 {
-  
+  //while(flag)
+  while((TIFR1 & (1 << OCF1A)) == 0)
+  {
   if (nunchuk_read()) 
       {     
           
@@ -139,6 +155,16 @@ void loop()
             tft.fillRect(y_bom + 5, x_bom, 20, 20, 0xFFFF);
           }*/
         //}
-      _delay_ms(120);
       }
+  TIFR1 |= (1 << OCF1A);
+  }
+}
+
+void setup_timer1()
+{
+  cli();
+  TCCR1B |= (1 << WGM12) | (1 << CS10) | (1 << CS12);
+  TCNT1 = 0;
+  OCR1A = 3124; //delay 200 ms
+  TIMSK1 |= (1 << OCIE1A);
 }
