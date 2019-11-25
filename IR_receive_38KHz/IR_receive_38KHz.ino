@@ -20,7 +20,7 @@ ISR(TIMER2_COMPA_vect)
 {
   counter++;
 
-  if(counter > 700 && new_data)
+  if(counter > 500 && new_data)
   {
     for(int i = bit_positie; i>=0; i--)
     {
