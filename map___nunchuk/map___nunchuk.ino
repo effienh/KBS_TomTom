@@ -36,8 +36,13 @@ Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC);
 int y_waarde = 128;
 int x_waarde = 128;
 
+int deadzone = 0;
+int prev_state = 0;
+
 int y_bom;
 int x_bom;
+
+int pixel = 16;
 
 void setupWire()
 {
@@ -48,35 +53,53 @@ void setupWire()
 
 void setup(void)
 {
+  Serial.begin(9600);
   ImageReturnCode stat; // Status from image-reading functions
-
+  
   tft.begin();          // Initialize screen
   SD.begin(SD_CS, SD_SCK_MHZ(25));
   setupWire();
   
 
   // Fill screen blue. Not a required step, this just shows that we're
-  // successfully communicating with the screen.
-  
-  //stat = reader.drawBMP("/niceguy.bmp", tft, 0, 0);
+  // successfully communicating with the screen
   
   // Load full-screen BMP file 'map.bmp' at position (0,0) (top left).
   // Notice the 'reader' object performs this, with 'tft' as an argument.
   
   stat = reader.drawBMP("/map.bmp", tft, 0, 0);
-  
 }
 
 void loop() 
 {
+  /*
+  ImageReturnCode stat = reader.drawBMP("/beer1.bmp", tft, 0, 0);
+  stat = reader.drawBMP("/beer2.bmp", tft, 0, 0);
+  stat = reader.drawBMP("/beer3.bmp", tft, 0, 0);
+  stat = reader.drawBMP("/beer4.bmp", tft, 0, 0);
+*/
+  
   if (nunchuk_read()) 
       {
+        /*
+          if((nunchuk_joystickY_raw() == deadzone) && (nunchuk_joystickX_raw() == deadzone))
+          {
+            prev_state = 0;
+          }
+          */
+
+        //if(prev_state == 0)
+        //{
+          
           if(nunchuk_joystickY_raw() > 200) //up
           {
-            y_waarde = y_waarde + 1;
-            tft.fillRect(y_waarde, x_waarde, 5, 5, 0x0000);
-            tft.fillRect((y_waarde - 5), x_waarde, 5, 5, 0xFFFF);
-
+            y_waarde = y_waarde + pixel;
+            tft.fillRect(y_waarde, x_waarde, pixel, pixel, 0x0000);
+            //tft.fillRect((y_waarde - 5), x_waarde, 5, 5, 0xFFFF);
+            ImageReturnCode ground_refresh = reader.drawBMP("/blok.bmp", tft, y_waarde - pixel, x_waarde);
+            
+            //prev_state = 1;
+            
             if(y_waarde > BORDER_UP)
             {
               y_waarde = BORDER_UP;
@@ -85,10 +108,13 @@ void loop()
 
           if(nunchuk_joystickX_raw() > 200) //right
           {
-            x_waarde = x_waarde + 1;
-            tft.fillRect(y_waarde, x_waarde, 5, 5, 0x0000);
-            tft.fillRect(y_waarde, (x_waarde - 5), 5, 5, 0xFFFF);
+            x_waarde = x_waarde + pixel;
+            tft.fillRect(y_waarde, x_waarde, pixel, pixel, 0x0000);
+            //tft.fillRect(y_waarde, (x_waarde - 5), pixel, pixel, 0xFFFF);
+            ImageReturnCode ground_refresh = reader.drawBMP("/blok.bmp", tft, y_waarde, x_waarde - pixel);
 
+            //prev_state = 1;
+            
             if(x_waarde > BORDER_RIGHT)
             {
               x_waarde = BORDER_RIGHT;
@@ -97,9 +123,12 @@ void loop()
 
           if(nunchuk_joystickX_raw() < 50) //left
           {
-            x_waarde = x_waarde - 1;
-            tft.fillRect(y_waarde, x_waarde, 5, 5, 0x0000);
-            tft.fillRect(y_waarde, (x_waarde + 5), 5, 5, 0xFFFF);
+            x_waarde = x_waarde - pixel;
+            tft.fillRect(y_waarde, x_waarde, pixel, pixel, 0x0000);
+            //tft.fillRect(y_waarde, (x_waarde + 5), 5, 5, 0xFFFF);
+            ImageReturnCode ground_refresh = reader.drawBMP("/blok.bmp", tft, y_waarde, x_waarde + pixel);
+
+            //prev_state = 1;
 
             if(x_waarde < BORDER_LEFT)
             {
@@ -109,9 +138,12 @@ void loop()
 
           if(nunchuk_joystickY_raw() < 50) //down
           {
-            y_waarde = y_waarde - 1;
-            tft.fillRect(y_waarde, x_waarde, 5, 5, 0x0000);
-            tft.fillRect((y_waarde + 5), x_waarde, 5, 5, 0xFFFF);
+            y_waarde = y_waarde - pixel;
+            tft.fillRect(y_waarde, x_waarde, pixel, pixel, 0x0000);
+            //tft.fillRect((y_waarde + 5), x_waarde, 5, 5, 0xFFFF);
+            ImageReturnCode ground_refresh = reader.drawBMP("/blok.bmp", tft, y_waarde + pixel, x_waarde);
+
+            //prev_state = 1;
 
             if(y_waarde < BORDER_DOWN)
             {
@@ -119,18 +151,19 @@ void loop()
             }
           }
 
-          if(nunchuk_buttonZ())
+          /*if(nunchuk_buttonZ())
           {
             y_bom = y_waarde;
             x_bom = x_waarde;
-            tft.fillRect(y_bom + 5, x_bom, 5, 5, 0xF800);
+            tft.fillRect(y_bom + pixel, x_bom, pixel, pixel, 0xF800);
           }
           if(nunchuk_buttonC())
           {
             y_bom = y_waarde;
             x_bom = x_waarde;            
             tft.fillRect(y_bom + 5, x_bom, 20, 20, 0xFFFF);
-          }
-      delay(5);
+          }*/
+        //}
+      _delay_ms(120);
       }
 }
