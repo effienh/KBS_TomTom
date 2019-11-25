@@ -5,14 +5,34 @@ int counter1 = 0;
 int counter2 = 0;
 int positie = 7;
 int sent = 0;
+uint8_t jannes_zn_va = 0;
 
-uint8_t bytje = 0b01001101;
+uint8_t bytje = 0b00000000;
 
 void timer2_setup();
 void IR_led_setup();
 
 ISR(TIMER2_COMPA_vect)
 { 
+  if(jannes_zn_va <= 10)
+  {
+    bytje = 0b00100000;
+  }
+
+  if(jannes_zn_va <= 20 && jannes_zn_va > 10)
+  {
+   bytje = 0b00000001; 
+  }
+
+  if(jannes_zn_va > 20 && jannes_zn_va < 30)
+  {
+    bytje = 0b00010011;
+  }
+  if(jannes_zn_va >= 30)
+  {
+    jannes_zn_va = 0;
+  }
+  
   if(~(bytje |~(1 << positie)))
   {
     if(counter1 < 100)
@@ -70,7 +90,9 @@ ISR(TIMER2_COMPA_vect)
   if(positie == -1)
   {
     positie = 7;
+    jannes_zn_va++;
   }
+  
 }
 
 int main()
