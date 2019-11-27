@@ -53,7 +53,6 @@ void setupWire()
 
 void setup(void)
 {
-  Serial.begin(9600);
   ImageReturnCode stat; // Status from image-reading functions
   
   tft.begin();          // Initialize screen
@@ -72,12 +71,6 @@ void setup(void)
 
 void loop() 
 {
-  /*
-  ImageReturnCode stat = reader.drawBMP("/beer1.bmp", tft, 0, 0);
-  stat = reader.drawBMP("/beer2.bmp", tft, 0, 0);
-  stat = reader.drawBMP("/beer3.bmp", tft, 0, 0);
-  stat = reader.drawBMP("/beer4.bmp", tft, 0, 0);
-*/
   
   if (nunchuk_read()) 
       {
@@ -164,6 +157,6 @@ void loop()
             tft.fillRect(y_bom + 5, x_bom, 20, 20, 0xFFFF);
           }*/
         //}
-      _delay_ms(120);
       }
+    _delay_ms(120);
 }
