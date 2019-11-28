@@ -18,13 +18,13 @@
 
 #define USE_SD_CARD
 
-int BORDER_UP = 176;
-int BORDER_DOWN = 48;
-int BORDER_LEFT = 102;
-int BORDER_RIGHT = 246;
+int BORDER_UP = 192;
+int BORDER_DOWN = 32;
+int BORDER_LEFT = 96;
+int BORDER_RIGHT = 256;
 
 int y_waarde = 208;
-int x_waarde = 116;
+int x_waarde = 96;
 
 int deadzone = 0;
 int prev_state = 0;
@@ -74,9 +74,9 @@ ISR(TIMER1_COMPA_vect)
    }
 }
 
-void setup(void)
+int main(void)
 {
-  Serial.begin(9600);
+  init();
   ImageReturnCode stat; // Status from image-reading functions
   
   tft.begin();          // Initialize screen
@@ -85,61 +85,60 @@ void setup(void)
   timer1_setup();
   
   stat = reader.drawBMP("/map.bmp", tft, 0, 0);
-}
 
-void loop() 
+while (1)
 {
   if (nunchuk_read()) 
       {
           if(up)
           {
-            y_waarde = y_waarde + pixel;
-            tft.fillRect(y_waarde, x_waarde, pixel, pixel, 0x0000);
-            ImageReturnCode ground_refresh = reader.drawBMP("/blok.bmp", tft, y_waarde - pixel, x_waarde);
-            
-            if(y_waarde > BORDER_UP)
+            if(y_waarde >= BORDER_UP)
             {
               y_waarde = BORDER_UP;
+            }else{            
+              y_waarde = y_waarde + pixel;
+              ImageReturnCode char_refresh = reader.drawBMP("/beer.bmp", tft, y_waarde, x_waarde);
+              ImageReturnCode ground_refresh = reader.drawBMP("/blok.bmp", tft, y_waarde - pixel, x_waarde);
             }
             up = 0;
           }
           
           if(rechts)
           {
-            x_waarde = x_waarde + pixel;
-            tft.fillRect(y_waarde, x_waarde, pixel, pixel, 0x0000);
-            ImageReturnCode ground_refresh = reader.drawBMP("/blok.bmp", tft, y_waarde, x_waarde - pixel);
-
-            if(x_waarde > BORDER_RIGHT)
+            if(x_waarde >= BORDER_RIGHT)
             {
               x_waarde = BORDER_RIGHT;
+            }else{
+              x_waarde = x_waarde + pixel;
+              ImageReturnCode char_refresh = reader.drawBMP("/beer.bmp", tft, y_waarde, x_waarde);
+              ImageReturnCode ground_refresh = reader.drawBMP("/blok.bmp", tft, y_waarde, x_waarde - pixel);
             }
             rechts = 0;
           }
           
           if(links)
           {
-            x_waarde = x_waarde - pixel;
-            tft.fillRect(y_waarde, x_waarde, pixel, pixel, 0x0000);
-            //tft.fillRect(y_waarde, (x_waarde + 5), 5, 5, 0xFFFF);
-            ImageReturnCode ground_refresh = reader.drawBMP("/blok.bmp", tft, y_waarde, x_waarde + pixel);
-
-            if(x_waarde < BORDER_LEFT)
+            if(x_waarde <= BORDER_LEFT)
             {
               x_waarde = BORDER_LEFT;
+            }else{
+              x_waarde = x_waarde - pixel;
+              tft.fillRect(y_waarde, x_waarde, pixel, pixel, 0x0000);
+              ImageReturnCode char_refresh = reader.drawBMP("/beer.bmp", tft, y_waarde, x_waarde);
+              ImageReturnCode ground_refresh = reader.drawBMP("/blok.bmp", tft, y_waarde, x_waarde + pixel);
             }
             links = 0;
           }
 
           if(onder)
           {
-            y_waarde = y_waarde - pixel;
-            tft.fillRect(y_waarde, x_waarde, pixel, pixel, 0x0000);
-            ImageReturnCode ground_refresh = reader.drawBMP("/blok.bmp", tft, y_waarde + pixel, x_waarde);
-
-            if(y_waarde < BORDER_DOWN)
+            if(y_waarde <= BORDER_DOWN)
             {
               y_waarde = BORDER_DOWN;
+            }else{
+              y_waarde = y_waarde - pixel;
+              ImageReturnCode char_refresh = reader.drawBMP("/beer.bmp", tft, y_waarde, x_waarde);
+              ImageReturnCode ground_refresh = reader.drawBMP("/blok.bmp", tft, y_waarde + pixel, x_waarde);
             }
             onder = 0;
           }
@@ -158,6 +157,7 @@ void loop()
           }*/
         //}
       }
+  }
 }
 
 void timer1_setup()
