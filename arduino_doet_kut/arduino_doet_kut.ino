@@ -85,6 +85,7 @@ int main(void)
   timer1_setup();
   
   stat = reader.drawBMP("/map.bmp", tft, 0, 0);
+  ImageReturnCode char_refresh = reader.drawBMP("/thierry.bmp", tft, y_waarde - 176, x_waarde + 160);
 
 while (1)
 {
@@ -157,6 +158,7 @@ while (1)
           }*/
         //}
       }
+    ImageReturnCode set = reader.drawBMP("/shadow.bmp", tft, 208, 96);
   }
 }
 
