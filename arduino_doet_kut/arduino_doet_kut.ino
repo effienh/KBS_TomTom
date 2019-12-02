@@ -37,6 +37,13 @@ int rechts;
 int links;
 int onder;
 
+const int rows = 10;
+const int columns = 10;
+const int width = 160;
+const int height =  160;
+
+int grid[rows][columns];
+
 int pixel = 16;
 
 // TFT display and SD card share the hardware SPI interface, using
@@ -45,119 +52,102 @@ int pixel = 16;
 #define SD_CS   4 // SD card select pin
 #define TFT_CS 10 // TFT select pin
 #define TFT_DC  9 // TFT display/command pin
-  
+
 SdFat SD;         // SD card filesystem
 Adafruit_ImageReader reader(SD); // Image-reader object, pass in SD filesys
 
 Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC);
 
+
+//setups
 void timer1_setup();
 void setupWire();
+void lcd_setup();
+void map_setup();
+
+//control functions
+void draw();
+void go_up();
+void go_right();
+void go_left();
+void go_down();
 
 ISR(TIMER1_COMPA_vect)
 {
-   if(nunchuk_joystickY_raw() > 200) //up
-   {
+  if (nunchuk_joystickY_raw() > 200) //up
+  {
     up = 1;
-   } 
-   if(nunchuk_joystickX_raw() > 200) //right
-   {
+  }
+  if (nunchuk_joystickX_raw() > 200) //right
+  {
     rechts = 1;
-   }
-   if(nunchuk_joystickX_raw() < 50) //left
-   {
+  }
+  if (nunchuk_joystickX_raw() < 50) //left
+  {
     links = 1;
-   }
-   if(nunchuk_joystickY_raw() < 50) //down
-   {
+  }
+  if (nunchuk_joystickY_raw() < 50) //down
+  {
     onder = 1;
-   }
+  }
 }
 
 int main(void)
 {
   init();
-  ImageReturnCode stat; // Status from image-reading functions
-  
-  tft.begin();          // Initialize screen
-  SD.begin(SD_CS, SD_SCK_MHZ(25));
+  lcd_setup();
   setupWire();
   timer1_setup();
-  
-  stat = reader.drawBMP("/map.bmp", tft, 0, 0);
-  ImageReturnCode char_refresh = reader.drawBMP("/thierry.bmp", tft, y_waarde - 176, x_waarde + 160);
+  map_setup();
 
-while (1)
-{
-  if (nunchuk_read()) 
+  while (1)
+  {
+    if (nunchuk_read())
+    {
+      if (up)
       {
-          if(up)
-          {
-            if(y_waarde >= BORDER_UP)
-            {
-              y_waarde = BORDER_UP;
-            }else{            
-              y_waarde = y_waarde + pixel;
-              ImageReturnCode char_refresh = reader.drawBMP("/beer.bmp", tft, y_waarde, x_waarde);
-              ImageReturnCode ground_refresh = reader.drawBMP("/blok.bmp", tft, y_waarde - pixel, x_waarde);
-            }
-            up = 0;
-          }
-          
-          if(rechts)
-          {
-            if(x_waarde >= BORDER_RIGHT)
-            {
-              x_waarde = BORDER_RIGHT;
-            }else{
-              x_waarde = x_waarde + pixel;
-              ImageReturnCode char_refresh = reader.drawBMP("/beer.bmp", tft, y_waarde, x_waarde);
-              ImageReturnCode ground_refresh = reader.drawBMP("/blok.bmp", tft, y_waarde, x_waarde - pixel);
-            }
-            rechts = 0;
-          }
-          
-          if(links)
-          {
-            if(x_waarde <= BORDER_LEFT)
-            {
-              x_waarde = BORDER_LEFT;
-            }else{
-              x_waarde = x_waarde - pixel;
-              tft.fillRect(y_waarde, x_waarde, pixel, pixel, 0x0000);
-              ImageReturnCode char_refresh = reader.drawBMP("/beer.bmp", tft, y_waarde, x_waarde);
-              ImageReturnCode ground_refresh = reader.drawBMP("/blok.bmp", tft, y_waarde, x_waarde + pixel);
-            }
-            links = 0;
-          }
-
-          if(onder)
-          {
-            if(y_waarde <= BORDER_DOWN)
-            {
-              y_waarde = BORDER_DOWN;
-            }else{
-              y_waarde = y_waarde - pixel;
-              ImageReturnCode char_refresh = reader.drawBMP("/beer.bmp", tft, y_waarde, x_waarde);
-              ImageReturnCode ground_refresh = reader.drawBMP("/blok.bmp", tft, y_waarde + pixel, x_waarde);
-            }
-            onder = 0;
-          }
-
-          /*if(nunchuk_buttonZ())
-          {
-            y_bom = y_waarde;
-            x_bom = x_waarde;
-            tft.fillRect(y_bom + pixel, x_bom, pixel, pixel, 0xF800);
-          }
-          if(nunchuk_buttonC())
-          {
-            y_bom = y_waarde;
-            x_bom = x_waarde;            
-            tft.fillRect(y_bom + 5, x_bom, 20, 20, 0xFFFF);
-          }*/
-        //}
+        if(!grid[((224 - y_waarde)/16)-1][x_waarde])
+        {
+          go_up();
+        }
+        up = 0;
       }
+
+      if (rechts)
+      {
+        go_right();
+
+        rechts = 0;
+      }
+
+      if (links)
+      {
+        go_left();
+
+        links = 0;
+      }
+
+      if (onder)
+      {
+        go_down();
+
+        onder = 0;
+      }
+
+      /*if(nunchuk_buttonZ())
+        {
+        y_bom = y_waarde;
+        x_bom = x_waarde;
+        tft.fillRect(y_bom + pixel, x_bom, pixel, pixel, 0xF800);
+        }
+        if(nunchuk_buttonC())
+        {
+        y_bom = y_waarde;
+        x_bom = x_waarde;
+        tft.fillRect(y_bom + 5, x_bom, 20, 20, 0xFFFF);
+        }*/
+      //}
+    }
     ImageReturnCode set = reader.drawBMP("/shadow.bmp", tft, 208, 96);
   }
 }
@@ -185,3 +175,97 @@ void setupWire()
   init();
   nunchuk_init();
 }
+
+void lcd_setup()
+{
+  tft.begin();          // Initialize screen
+  SD.begin(SD_CS, SD_SCK_MHZ(25));
+}
+
+void map_setup()
+{
+  ImageReturnCode stat; // Status from image-reading functions
+  stat = reader.drawBMP("/map.bmp", tft, 0, 0);
+  ImageReturnCode char_refresh = reader.drawBMP("/thierry.bmp", tft, y_waarde - 176, x_waarde + 160);
+
+  for (int row = 2; row <= 10; row = row + 2)
+  {
+    for (int column = 2; column <= 10; column = column + 2)
+    {
+      grid[row][column] = 1;
+    }
+  }
+}
+
+void go_up()
+{
+  if (y_waarde >= BORDER_UP)
+  {
+    y_waarde = BORDER_UP;
+  } else
+  {
+    y_waarde = y_waarde + pixel;
+    ImageReturnCode char_refresh = reader.drawBMP("/beer.bmp", tft, y_waarde, x_waarde);
+    ImageReturnCode ground_refresh = reader.drawBMP("/blok.bmp", tft, y_waarde - pixel, x_waarde);
+  }
+}
+
+void go_right()
+{
+  if (x_waarde >= BORDER_RIGHT)
+  {
+    x_waarde = BORDER_RIGHT;
+  } else
+  {
+    x_waarde = x_waarde + pixel;
+    ImageReturnCode char_refresh = reader.drawBMP("/beer.bmp", tft, y_waarde, x_waarde);
+    ImageReturnCode ground_refresh = reader.drawBMP("/blok.bmp", tft, y_waarde, x_waarde - pixel);
+  }
+}
+
+void go_left()
+{
+  if (x_waarde <= BORDER_LEFT)
+  {
+    x_waarde = BORDER_LEFT;
+  } else
+  {
+    x_waarde = x_waarde - pixel;
+    tft.fillRect(y_waarde, x_waarde, pixel, pixel, 0x0000);
+    ImageReturnCode char_refresh = reader.drawBMP("/beer.bmp", tft, y_waarde, x_waarde);
+    ImageReturnCode ground_refresh = reader.drawBMP("/blok.bmp", tft, y_waarde, x_waarde + pixel);
+  }
+}
+
+void go_down()
+{
+  if (y_waarde <= BORDER_DOWN)
+  {
+    y_waarde = BORDER_DOWN;
+  } else
+  {
+    y_waarde = y_waarde - pixel;
+    ImageReturnCode char_refresh = reader.drawBMP("/beer.bmp", tft, y_waarde, x_waarde);
+    ImageReturnCode ground_refresh = reader.drawBMP("/blok.bmp", tft, y_waarde + pixel, x_waarde);
+  }
+}
+
+/*void draw() 
+{
+  float cellWidth = width / columns;
+  float cellHeight = height / rows;
+
+  for (int row = 1; row < rows; row++) {
+    for (int column = 1; column < columns; column++) {
+
+      float cellX = (cellWidth * column) + 80;
+      float cellY = 224 - (cellHeight * row) ;
+    }
+  }
+
+  //fill the player's cell with green
+  float playerPixelX = playerIndexX * cellWidth;
+  float playerPixelY = playerIndexY * cellHeight;
+  fill(0, 255, 0);
+  rect(playerPixelX, playerPixelY, cellWidth, cellHeight);
+}*/
