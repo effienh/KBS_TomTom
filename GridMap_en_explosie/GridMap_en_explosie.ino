@@ -90,6 +90,9 @@ ISR(TIMER1_COMPA_vect)
    {
     onder = 1;
    }
+   if(nunchuk_buttonZ() != 0){
+    ingedrukt = 1;
+   }
 }
 
 void maakBlokken(uint8_t gridMap[7][9], uint8_t x, uint8_t y) {
@@ -184,7 +187,7 @@ while (1)
             onder = 0;
           }
 
-          if(nunchuk_buttonZ())
+          if(ingedrukt)
           {
             if(aantalbommmen <= 3){
               y_bom = y_waarde;
@@ -193,8 +196,13 @@ while (1)
               aantalbommen++;
               delay(200);
               ImageReturnCode ground_refresh = reader.drawBMP("/blok.bmp", tft, y_waarde + pixel, x_waarde);
+              ImageReturnCode ground_refresh = reader.drawBMP("/blok.bmp", tft, y_waarde - pixel, x_waarde);
+              ImageReturnCode ground_refresh = reader.drawBMP("/blok.bmp", tft, y_waarde, x_waarde + pixel);
+              ImageReturnCode ground_refresh = reader.drawBMP("/blok.bmp", tft, y_waarde, x_waarde - pixel);
+              ImageReturnCode ground_refresh = reader.drawBMP("/blok.bmp", tft, y_waarde, x_waarde);
               aantalbommmen--;
             }
+            ingedrukt = 0;
           }
           /*if(nunchuk_buttonC())
           {
