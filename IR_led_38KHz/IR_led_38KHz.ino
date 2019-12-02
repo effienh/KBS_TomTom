@@ -16,17 +16,17 @@ ISR(TIMER2_COMPA_vect)
 { 
   if(jannes_zn_va <= 10)
   {
-    bytje = 0b00100000;
+    bytje = 7;
   }
 
   if(jannes_zn_va <= 20 && jannes_zn_va > 10)
   {
-   bytje = 0b00000001; 
+   bytje = 69; 
   }
 
   if(jannes_zn_va > 20 && jannes_zn_va < 30)
   {
-    bytje = 0b00010011;
+    bytje = 147;
   }
   if(jannes_zn_va >= 30)
   {
