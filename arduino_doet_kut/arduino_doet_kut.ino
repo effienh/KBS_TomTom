@@ -106,7 +106,7 @@ int main(void)
     {
       if (up)
       {
-        if(!grid[((224 - y_waarde)/16)-1][x_waarde])
+        if (!grid[((208 - y_waarde) / pixel) - 1][(x_waarde - 96) / pixel])
         {
           go_up();
         }
@@ -115,22 +115,28 @@ int main(void)
 
       if (rechts)
       {
-        go_right();
-
+        if (!grid[((208 - y_waarde) / pixel)][((x_waarde - 96) / pixel) + 1])
+        {
+          go_right();
+        }
         rechts = 0;
       }
 
       if (links)
       {
-        go_left();
-
+        if (!grid[((208 - y_waarde) / pixel)][((x_waarde - 96) / pixel) - 1])
+        {
+          go_left();
+        }
         links = 0;
       }
 
       if (onder)
       {
-        go_down();
-
+        if (!grid[((208 - y_waarde) / pixel) + 1][(x_waarde - 96) / pixel])
+        {
+          go_down();
+        }
         onder = 0;
       }
 
@@ -190,9 +196,10 @@ void map_setup()
 
   for (int row = 2; row <= 10; row = row + 2)
   {
-    for (int column = 2; column <= 10; column = column + 2)
+    for (int column = 1; column <= 10; column = column + 2)
     {
       grid[row][column] = 1;
+      tft.fillRect(208 - (row * 16), 96 + (column * 16), pixel, pixel, 0xF0F0F0);
     }
   }
 }
@@ -249,23 +256,3 @@ void go_down()
     ImageReturnCode ground_refresh = reader.drawBMP("/blok.bmp", tft, y_waarde + pixel, x_waarde);
   }
 }
-
-/*void draw() 
-{
-  float cellWidth = width / columns;
-  float cellHeight = height / rows;
-
-  for (int row = 1; row < rows; row++) {
-    for (int column = 1; column < columns; column++) {
-
-      float cellX = (cellWidth * column) + 80;
-      float cellY = 224 - (cellHeight * row) ;
-    }
-  }
-
-  //fill the player's cell with green
-  float playerPixelX = playerIndexX * cellWidth;
-  float playerPixelY = playerIndexY * cellHeight;
-  fill(0, 255, 0);
-  rect(playerPixelX, playerPixelY, cellWidth, cellHeight);
-}*/
