@@ -7,6 +7,9 @@
 #include <Pixels_SPIsw.h>
 #include <Pixels_ILI9341.h>
 
+
+
+
 //Pixels pxs(240, 400);
 
 Pixels pxs(240, 320);
@@ -16,8 +19,8 @@ Pixels pxs(240, 320);
 void setup() {
 		pxs.init();
 		pxs.clear();
-		pxs.setBackground(100, 100, 100);
-	  pxs.setColor(100, 100, 100);
+		pxs.setBackground(255, 0, 0);
+	  pxs.setColor(255, 0, 0);
     pxs.drawPixel(10, 10);
 	}
 
