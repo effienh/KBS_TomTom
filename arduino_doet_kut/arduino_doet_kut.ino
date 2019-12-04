@@ -18,6 +18,9 @@
 
 #define USE_SD_CARD
 
+#define PLAYER1 "/beer.bmp"
+#define PLAYER2 "/thierry.bmp"
+
 int BORDER_UP = 192;
 int BORDER_DOWN = 32;
 int BORDER_LEFT = 96;
@@ -37,24 +40,25 @@ int rechts;
 int links;
 int onder;
 
-const int rows = 10;
-const int columns = 10;
+const int rows = 12;
+const int columns = 12;
 const int width = 160;
 const int height =  160;
 
 int grid[rows][columns];
 
-int pixel = 16;
+int bomb_location[rows][columns];
 
-// TFT display and SD card share the hardware SPI interface, using
-// 'select' pins for each to identify the active device on the bus.
+int bomb_counter = 0;
+
+int pixel = 16;
 
 #define SD_CS   4 // SD card select pin
 #define TFT_CS 10 // TFT select pin
 #define TFT_DC  9 // TFT display/command pin
 
-SdFat SD;         // SD card filesystem
-Adafruit_ImageReader reader(SD); // Image-reader object, pass in SD filesys
+SdFat SD;
+Adafruit_ImageReader reader(SD);
 
 Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC);
 
@@ -90,6 +94,11 @@ ISR(TIMER1_COMPA_vect)
   {
     onder = 1;
   }
+
+  if (bomb_set)
+  {
+    bomb_counter++;
+  }
 }
 
 int main(void)
@@ -106,7 +115,7 @@ int main(void)
     {
       if (up)
       {
-        if (!grid[((208 - y_waarde) / pixel) - 1][(x_waarde - 96) / pixel])
+        if (!grid[((208 - y_waarde) / pixel) - 1][(x_waarde - 80) / pixel])
         {
           go_up();
         }
@@ -115,7 +124,7 @@ int main(void)
 
       if (rechts)
       {
-        if (!grid[((208 - y_waarde) / pixel)][((x_waarde - 96) / pixel) + 1])
+        if (!grid[((208 - y_waarde) / pixel)][((x_waarde - 80) / pixel) + 1])
         {
           go_right();
         }
@@ -124,7 +133,7 @@ int main(void)
 
       if (links)
       {
-        if (!grid[((208 - y_waarde) / pixel)][((x_waarde - 96) / pixel) - 1])
+        if (!grid[((208 - y_waarde) / pixel)][((x_waarde - 80) / pixel) - 1])
         {
           go_left();
         }
@@ -133,30 +142,22 @@ int main(void)
 
       if (onder)
       {
-        if (!grid[((208 - y_waarde) / pixel) + 1][(x_waarde - 96) / pixel])
+        if (!grid[((208 - y_waarde) / pixel) + 1][(x_waarde - 80) / pixel])
         {
           go_down();
         }
         onder = 0;
       }
 
-      /*if(nunchuk_buttonZ())
-        {
-        y_bom = y_waarde;
-        x_bom = x_waarde;
-        tft.fillRect(y_bom + pixel, x_bom, pixel, pixel, 0xF800);
-        }
-        if(nunchuk_buttonC())
-        {
-        y_bom = y_waarde;
-        x_bom = x_waarde;
-        tft.fillRect(y_bom + 5, x_bom, 20, 20, 0xFFFF);
-        }*/
-      //}
+      if(nunchuk_buttonZ())
+      {
+        place_bomb();
+      }
     }
-    ImageReturnCode set = reader.drawBMP("/shadow.bmp", tft, 208, 96);
   }
+  ImageReturnCode set = reader.drawBMP("/shadow.bmp", tft, 208, 96);
 }
+
 
 void timer1_setup()
 {
@@ -165,7 +166,7 @@ void timer1_setup()
   TCCR1B = 0; // same for TCCR1B
   TCNT1  = 0; // initialize counter value to 0
   // set compare match register for 120.00480019200768 Hz increments
-  OCR1A = 12000; // = 16000000 / (8 * 120.00480019200768) - 1 (must be <65536)
+  OCR1A = 12000;
   // turn on CTC mode
   TCCR1B |= (1 << WGM12);
   // Set CS12, CS11 and CS10 bits for 8 prescaler
@@ -192,14 +193,13 @@ void map_setup()
 {
   ImageReturnCode stat; // Status from image-reading functions
   stat = reader.drawBMP("/map.bmp", tft, 0, 0);
-  ImageReturnCode char_refresh = reader.drawBMP("/thierry.bmp", tft, y_waarde - 176, x_waarde + 160);
+  ImageReturnCode char_refresh = reader.drawBMP(PLAYER1, tft, y_waarde - 176, x_waarde + 160);
 
   for (int row = 2; row <= 10; row = row + 2)
   {
-    for (int column = 1; column <= 10; column = column + 2)
+    for (int column = 2; column <= 10; column = column + 2)
     {
       grid[row][column] = 1;
-      tft.fillRect(208 - (row * 16), 96 + (column * 16), pixel, pixel, 0xF0F0F0);
     }
   }
 }
@@ -212,7 +212,7 @@ void go_up()
   } else
   {
     y_waarde = y_waarde + pixel;
-    ImageReturnCode char_refresh = reader.drawBMP("/beer.bmp", tft, y_waarde, x_waarde);
+    ImageReturnCode char_refresh = reader.drawBMP(PLAYER2, tft, y_waarde, x_waarde);
     ImageReturnCode ground_refresh = reader.drawBMP("/blok.bmp", tft, y_waarde - pixel, x_waarde);
   }
 }
@@ -225,7 +225,7 @@ void go_right()
   } else
   {
     x_waarde = x_waarde + pixel;
-    ImageReturnCode char_refresh = reader.drawBMP("/beer.bmp", tft, y_waarde, x_waarde);
+    ImageReturnCode char_refresh = reader.drawBMP(PLAYER2, tft, y_waarde, x_waarde);
     ImageReturnCode ground_refresh = reader.drawBMP("/blok.bmp", tft, y_waarde, x_waarde - pixel);
   }
 }
@@ -239,7 +239,7 @@ void go_left()
   {
     x_waarde = x_waarde - pixel;
     tft.fillRect(y_waarde, x_waarde, pixel, pixel, 0x0000);
-    ImageReturnCode char_refresh = reader.drawBMP("/beer.bmp", tft, y_waarde, x_waarde);
+    ImageReturnCode char_refresh = reader.drawBMP(PLAYER2, tft, y_waarde, x_waarde);
     ImageReturnCode ground_refresh = reader.drawBMP("/blok.bmp", tft, y_waarde, x_waarde + pixel);
   }
 }
@@ -252,7 +252,19 @@ void go_down()
   } else
   {
     y_waarde = y_waarde - pixel;
-    ImageReturnCode char_refresh = reader.drawBMP("/beer.bmp", tft, y_waarde, x_waarde);
+    ImageReturnCode char_refresh = reader.drawBMP(PLAYER2, tft, y_waarde, x_waarde);
     ImageReturnCode ground_refresh = reader.drawBMP("/blok.bmp", tft, y_waarde + pixel, x_waarde);
+  }
+}
+
+void place_bomb()
+{
+  bomb_set = 1;
+  bomb_location[(208 - y_waarde) / pixel)][(x_waarde - 80) / pixel];
+  
+  if(bomb_counter >= 100)
+  {
+    bomb_set = 0;
+    bomb_counter = 0;
   }
 }
