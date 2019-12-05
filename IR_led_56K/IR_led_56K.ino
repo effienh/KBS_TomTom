@@ -6,14 +6,15 @@ int counter2 = 0;
 int positie = 7;
 int sent = 0;
 
-uint8_t bytje = 0b0;
+uint8_t bytje = 0;
 
 void timer2_setup();
 void IR_led_setup();
 
 ISR(TIMER2_COMPA_vect)
 {
-  if(~(bytje |~(1 << positie)))
+    PORTD ^= (1<<PORTD5);
+  /*if(~(bytje |~(1 << positie)))
   {
     if(counter1 < 1000)
     {
@@ -70,7 +71,7 @@ ISR(TIMER2_COMPA_vect)
   if(positie == -1)
   {
     positie = 7;
-  }
+  }*/
 }
 
 int main()
@@ -86,7 +87,8 @@ int main()
 
 void IR_led_setup()
 {
-  DDRD |= (1<<DDD3);
+  DDRD |= (1<<DDD5);
+  PORTD |= (1<<PORTD);
 }
 
 void timer2_setup()
@@ -96,7 +98,7 @@ void timer2_setup()
   TCCR2B = 0; // same for TCCR2B
   TCNT2  = 0; // initialize counter value to 0
   // set compare match register for 761904.7619047619 Hz increments
-  OCR2A = 35; // = 16000000 / (1 * 37000) - 1 (must be <256)
+  OCR2A = 17; // = 16000000 / (1 * 37000) - 1 (must be <256)
   // turn on CTC mode
   TCCR2A |= (0<<WGM20)|(1 << WGM21);
   TCCR2B |= (0<<WGM22);

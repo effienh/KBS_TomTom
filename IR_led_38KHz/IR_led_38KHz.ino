@@ -1,5 +1,7 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
+#include <Nunchuk.h>
+#include <Wire.h>
 
 int counter1 = 0;
 int counter2 = 0;
@@ -7,38 +9,21 @@ int positie = 7;
 int sent = 0;
 uint8_t jannes_zn_va = 0;
 
-uint8_t bytje = 0b00000000;
+uint8_t bytje = 0;
 
 void timer2_setup();
 void IR_led_setup();
+void setupWireNunchuk();
+void nunchuk_send();
 
 ISR(TIMER2_COMPA_vect)
 { 
-  if(jannes_zn_va <= 10)
-  {
-    bytje = 7;
-  }
-
-  if(jannes_zn_va <= 20 && jannes_zn_va > 10)
-  {
-   bytje = 69; 
-  }
-
-  if(jannes_zn_va > 20 && jannes_zn_va < 30)
-  {
-    bytje = 147;
-  }
-  if(jannes_zn_va >= 30)
-  {
-    jannes_zn_va = 0;
-  }
-  
   if(~(bytje |~(1 << positie)))
   {
     if(counter1 < 100)
     {
       counter1++;
-      PORTD ^= (1<<PORTD3);
+      PORTD ^= (1<<PORTD5);
     }
     
     if(counter1 >= 100)
@@ -49,7 +34,7 @@ ISR(TIMER2_COMPA_vect)
     if(sent)
     {
       counter2++;
-      PORTD &= ~(1<<PORTD3);
+      PORTD &= ~(1<<PORTD5);
     }
     
     if(counter2 >= 100)
@@ -64,7 +49,7 @@ ISR(TIMER2_COMPA_vect)
     if(counter1 < 100)
     {
       counter1++;
-      PORTD ^= (1<<PORTD3);
+      PORTD ^= (1<<PORTD5);
     }
     
     if(counter1 >= 100)
@@ -75,7 +60,7 @@ ISR(TIMER2_COMPA_vect)
     if(sent)
     {
       counter2++;
-      PORTD &= ~(1<<PORTD3);
+      PORTD &= ~(1<<PORTD5);
     }
     
     if(counter2 >= 300)
@@ -97,19 +82,22 @@ ISR(TIMER2_COMPA_vect)
 
 int main()
 {
+  setupWireNunchuk();
+  Serial.begin(9600);
   timer2_setup();
   IR_led_setup();
-  Serial.begin(9600);
   sei();
 
   while(1)
   {
+    nunchuk_send();
+    Serial.println(bytje);
   }
 }
 
 void IR_led_setup()
 {
-  DDRD |= (1<<DDD3);
+  DDRD |= (1<<DDD5);
 }
 
 void timer2_setup()
@@ -127,4 +115,34 @@ void timer2_setup()
   TCCR2B |= (0 << CS22) | (1 << CS21) | (0 << CS20);
   // enable timer compare interrupt
   TIMSK2 |= (1 << OCIE2A);
+}
+
+void setupWireNunchuk()
+{
+  Wire.begin();
+  init();
+  nunchuk_init();
+}
+
+void nunchuk_send(){
+  
+  if (nunchuk_joystickY_raw() > 200) //up
+  {
+    bytje = 1;
+  }
+  if (nunchuk_joystickX_raw() > 200) //right
+  {
+    bytje = 2;
+  }
+  if (nunchuk_joystickX_raw() < 50) //left
+  {
+    bytje = 3;
+  }
+  if (nunchuk_joystickY_raw() < 50) //down
+  {
+    bytje = 4;
+  }
+  /*if(nunchuk_buttonZ()){
+    bytje = 5;
+  }*/
 }
