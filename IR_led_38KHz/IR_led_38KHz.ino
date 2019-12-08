@@ -7,20 +7,21 @@ int counter1 = 0;
 int counter2 = 0;
 int positie = 7;
 int sent = 0;
-uint8_t jannes_zn_va = 0;
 
 uint8_t bytje = 0;
+
+uint8_t nunchuk_middle = 0;
 
 void timer2_setup();
 void IR_led_setup();
 void setupWireNunchuk();
-void nunchuk_send();
+void nunchuk_send_byte();
 
 ISR(TIMER2_COMPA_vect)
 { 
   if(~(bytje |~(1 << positie)))
   {
-    if(counter1 < 100)
+    if(counter1 < 100 /*&& !nunchuk_middle*/)
     {
       counter1++;
       PORTD ^= (1<<PORTD5);
@@ -46,7 +47,7 @@ ISR(TIMER2_COMPA_vect)
     }
   }else
   {
-    if(counter1 < 100)
+    if(counter1 < 100 /*&& !nunchuk_middle*/)
     {
       counter1++;
       PORTD ^= (1<<PORTD5);
@@ -75,7 +76,6 @@ ISR(TIMER2_COMPA_vect)
   if(positie == -1)
   {
     positie = 7;
-    jannes_zn_va++;
   }
   
 }
@@ -83,15 +83,17 @@ ISR(TIMER2_COMPA_vect)
 int main()
 {
   setupWireNunchuk();
-  Serial.begin(9600);
   timer2_setup();
   IR_led_setup();
   sei();
 
   while(1)
-  {
-    nunchuk_send();
-    Serial.println(bytje);
+  {    
+    if(nunchuk_read())
+    {
+      nunchuk_send_byte();
+      Serial.println(bytje);
+    }
   }
 }
 
@@ -119,30 +121,26 @@ void timer2_setup()
 
 void setupWireNunchuk()
 {
-  Wire.begin();
   init();
+  Wire.begin(0x52);
+  Serial.begin(9600);
   nunchuk_init();
 }
 
-void nunchuk_send(){
-  
-  if (nunchuk_joystickY_raw() > 200) //up
+void nunchuk_send_byte()
+{  
+  if(nunchuk_joystickY_raw() > 200) //
   {
-    bytje = 1;
-  }
-  if (nunchuk_joystickX_raw() > 200) //right
+    bytje = 0b00000001;
+    //nunchuk_middle = 0;
+  }else if(nunchuk_joystickY_raw() < 55)
   {
-    bytje = 2;
-  }
-  if (nunchuk_joystickX_raw() < 50) //left
+    bytje = 0b00001001;
+    //nunchuk_middle = 0;
+  }else if((nunchuk_joystickY_raw() < 135 && nunchuk_joystickY_raw() > 120) && (nunchuk_joystickX_raw() < 135 && nunchuk_joystickX_raw() > 120))
   {
-    bytje = 3;
+    bytje = 0b00000000;
+    //PORTD &= ~(1<<DDD5);
+    //nunchuk_middle = 1;
   }
-  if (nunchuk_joystickY_raw() < 50) //down
-  {
-    bytje = 4;
-  }
-  /*if(nunchuk_buttonZ()){
-    bytje = 5;
-  }*/
 }
