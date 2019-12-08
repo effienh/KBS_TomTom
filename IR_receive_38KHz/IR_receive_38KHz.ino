@@ -8,10 +8,11 @@ int difference_counters = 0;
 int count_interrupts = 0;
 int bit_positie = 7;
 int falling_edge = 1;
-int data_correct = 1;
 
-uint8_t data_byte;
-int for_counter = 0;
+uint8_t data_correct = 0;
+int data_byte[9];
+
+int middle, up, down, left, right, buttonc;
 
 void timer2_setup();
 void PCINT1_setup();
@@ -25,24 +26,8 @@ ISR(TIMER2_COMPA_vect)
 
 ISR(INT1_vect)
 {
-  for (int i = 0; i < 7; i++)
-  {
-    if (~(data_byte |~ (1 << i)))
-    {
-      for_counter++;
-    }
-  }
-  if(for_counter == 7)
-  {
-     bit_positie = 7;
-     data_byte = 0;
-     for_counter = 0;
-     Serial.println("");
-  }
-
   EICRA ^= (1 << ISC10);
   count_interrupts++;
-
   if (falling_edge)
   {
     prev_counter = counter;
@@ -57,25 +42,50 @@ ISR(INT1_vect)
 
   if (difference_counters >= 290 && difference_counters <= 390 && (count_interrupts % 2 == 0)) //is 1
   {
-    data_byte |= (1 << bit_positie);
+    data_byte[bit_positie] = 1;
     bit_positie--;
-    Serial.print(1);
     count_interrupts = 0;
+    data_correct++;
   } else if (difference_counters <= 200 && difference_counters >= 100 && (count_interrupts % 2 == 0)) //is 0
   {
-    data_byte &= ~(1 << bit_positie);
+    data_byte[bit_positie] = 0;
     bit_positie--;
-    Serial.print(0);
     count_interrupts = 0;
   }
+  if (bit_positie < 0)
+  {
+    bit_positie = 7;
+    data_byte[8] = {0};
+    if(data_correct == 0)
+    {
+      middle = 1;
+    }else if(data_correct == 1)
+    {
+      up = 1;
+    }else if(data_correct == 2)
+    {
+      down = 1;
+    }else if(data_correct == 3)
+    {
+      left = 1;
+    }else if(data_correct == 4)
+    {
+      right = 1;
+    }else if(data_correct == 8)
+    {
+      buttonc = 1;
+    }
+    data_correct = 0;
+  }
 }
+
 
 
 
 int main()
 {
   init();
-  Serial.begin(38400);
+  Serial.begin(9600);
   setup_pin3();
   timer2_setup();
   PCINT1_setup();
@@ -83,7 +93,31 @@ int main()
 
   while (1)
   {
-
+    if(middle)
+    {
+      Serial.println("MIDDLE");
+      middle = 0;
+    }else if(up)
+    {
+      Serial.println("UP");
+      up = 0;
+    }else if(down)
+    {
+      Serial.println("DOWN");
+      down = 0;
+    }else if(left)
+    {
+      Serial.println("LEFT");
+      left = 0;
+    }else if(right)
+    {
+      Serial.println("RIGHT");
+      right = 0;
+    }else if(buttonc)
+    {
+      Serial.println("BUTTONC");
+      buttonc = 0;
+    }
   }
 }
 

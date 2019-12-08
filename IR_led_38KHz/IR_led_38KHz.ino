@@ -10,61 +10,59 @@ int sent = 0;
 
 uint8_t bytje = 0;
 
-uint8_t nunchuk_middle = 0;
-
 void timer2_setup();
 void IR_led_setup();
 void setupWireNunchuk();
 void nunchuk_send_byte();
 
 ISR(TIMER2_COMPA_vect)
-{ 
-  if(~(bytje |~(1 << positie)))
+{
+  if (~(bytje | ~(1 << positie)))
   {
-    if(counter1 < 100 /*&& !nunchuk_middle*/)
+    if (counter1 < 100 /*&& !nunchuk_middle*/)
     {
       counter1++;
-      PORTD ^= (1<<PORTD5);
+      PORTD ^= (1 << PORTD5);
     }
-    
-    if(counter1 >= 100)
+
+    if (counter1 >= 100)
     {
       sent = 1;
     }
-  
-    if(sent)
+
+    if (sent)
     {
       counter2++;
-      PORTD &= ~(1<<PORTD5);
+      PORTD &= ~(1 << PORTD5);
     }
-    
-    if(counter2 >= 100)
+
+    if (counter2 >= 100)
     {
       counter1 = 0;
       counter2 = 0;
       positie--;
       sent = 0;
     }
-  }else
+  } else
   {
-    if(counter1 < 100 /*&& !nunchuk_middle*/)
+    if (counter1 < 100 /*&& !nunchuk_middle*/)
     {
       counter1++;
-      PORTD ^= (1<<PORTD5);
+      PORTD ^= (1 << PORTD5);
     }
-    
-    if(counter1 >= 100)
+
+    if (counter1 >= 100)
     {
       sent = 1;
     }
-  
-    if(sent)
+
+    if (sent)
     {
       counter2++;
-      PORTD &= ~(1<<PORTD5);
+      PORTD &= ~(1 << PORTD5);
     }
-    
-    if(counter2 >= 300)
+
+    if (counter2 >= 300)
     {
       counter1 = 0;
       counter2 = 0;
@@ -72,12 +70,12 @@ ISR(TIMER2_COMPA_vect)
       sent = 0;
     }
   }
-  
-  if(positie == -1)
+
+  if (positie == -1)
   {
     positie = 7;
   }
-  
+
 }
 
 int main()
@@ -87,19 +85,19 @@ int main()
   IR_led_setup();
   sei();
 
-  while(1)
-  {    
-    if(nunchuk_read())
+  while (1)
+  {
+    if (nunchuk_read())
     {
       nunchuk_send_byte();
-      Serial.println(bytje);
     }
+    check_buttonZ();
   }
 }
 
 void IR_led_setup()
 {
-  DDRD |= (1<<DDD5);
+  DDRD |= (1 << DDD5);
 }
 
 void timer2_setup()
@@ -111,8 +109,8 @@ void timer2_setup()
   // set compare match register for 761904.7619047619 Hz increments
   OCR2A = 52; // = 16000000 / (1 * 37000) - 1 (must be <256)
   // turn on CTC mode
-  TCCR2A |= (0<<WGM20)|(1 << WGM21);
-  TCCR2B |= (0<<WGM22);
+  TCCR2A |= (0 << WGM20) | (1 << WGM21);
+  TCCR2B |= (0 << WGM22);
   // Set CS22, CS21 and CS20 bits for 1 prescaler
   TCCR2B |= (0 << CS22) | (1 << CS21) | (0 << CS20);
   // enable timer compare interrupt
@@ -128,19 +126,29 @@ void setupWireNunchuk()
 }
 
 void nunchuk_send_byte()
-{  
-  if(nunchuk_joystickY_raw() > 200) //
+{
+  if (nunchuk_joystickY_raw() > 200) // up
   {
     bytje = 0b00000001;
-    //nunchuk_middle = 0;
-  }else if(nunchuk_joystickY_raw() < 55)
+  } else if (nunchuk_joystickY_raw() < 55) //down
   {
-    bytje = 0b00001001;
-    //nunchuk_middle = 0;
-  }else if((nunchuk_joystickY_raw() < 135 && nunchuk_joystickY_raw() > 120) && (nunchuk_joystickX_raw() < 135 && nunchuk_joystickX_raw() > 120))
+    bytje = 0b00000011;
+  } else if ((nunchuk_joystickY_raw() < 135 && nunchuk_joystickY_raw() > 120) && (nunchuk_joystickX_raw() < 135 && nunchuk_joystickX_raw() > 120))
   {
     bytje = 0b00000000;
-    //PORTD &= ~(1<<DDD5);
-    //nunchuk_middle = 1;
+  } else if (nunchuk_joystickX_raw() < 55) //links
+  {
+    bytje = 0b00000111;
+  } else if (nunchuk_joystickX_raw() > 200)
+  {
+    bytje = 0b00001111;
+  }
+}
+
+void check_buttonZ()
+{
+  if(nunchuk_buttonC())
+  {
+    bytje = 0b11111111;
   }
 }
