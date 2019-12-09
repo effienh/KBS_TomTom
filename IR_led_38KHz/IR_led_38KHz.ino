@@ -7,6 +7,7 @@ int counter1 = 0;
 int counter2 = 0;
 int positie = 7;
 int sent = 0;
+int jannes_zn_va = 0;
 
 uint8_t bytje = 0;
 
@@ -22,7 +23,7 @@ ISR(TIMER2_COMPA_vect)
     if (counter1 < 100 /*&& !nunchuk_middle*/)
     {
       counter1++;
-      PORTD ^= (1 << PORTD5);
+      PORTD ^= (1 << PORTD6);
     }
 
     if (counter1 >= 100)
@@ -33,7 +34,7 @@ ISR(TIMER2_COMPA_vect)
     if (sent)
     {
       counter2++;
-      PORTD &= ~(1 << PORTD5);
+      PORTD &= ~(1 << PORTD6);
     }
 
     if (counter2 >= 100)
@@ -48,7 +49,7 @@ ISR(TIMER2_COMPA_vect)
     if (counter1 < 100 /*&& !nunchuk_middle*/)
     {
       counter1++;
-      PORTD ^= (1 << PORTD5);
+      PORTD ^= (1 << PORTD6);
     }
 
     if (counter1 >= 100)
@@ -59,7 +60,7 @@ ISR(TIMER2_COMPA_vect)
     if (sent)
     {
       counter2++;
-      PORTD &= ~(1 << PORTD5);
+      PORTD &= ~(1 << PORTD6);
     }
 
     if (counter2 >= 300)
@@ -75,7 +76,6 @@ ISR(TIMER2_COMPA_vect)
   {
     positie = 7;
   }
-
 }
 
 int main()
@@ -97,7 +97,7 @@ int main()
 
 void IR_led_setup()
 {
-  DDRD |= (1 << DDD5);
+  DDRD |= (1 << DDD6);
 }
 
 void timer2_setup()
@@ -139,7 +139,7 @@ void nunchuk_send_byte()
   } else if (nunchuk_joystickX_raw() < 55) //links
   {
     bytje = 0b00000111;
-  } else if (nunchuk_joystickX_raw() > 200)
+  } else if (nunchuk_joystickX_raw() > 200)//rechts
   {
     bytje = 0b00001111;
   }
