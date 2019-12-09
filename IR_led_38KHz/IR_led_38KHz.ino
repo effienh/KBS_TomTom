@@ -135,7 +135,7 @@ void nunchuk_send_byte()
     bytje = 0b00000011;
   } else if ((nunchuk_joystickY_raw() < 135 && nunchuk_joystickY_raw() > 120) && (nunchuk_joystickX_raw() < 135 && nunchuk_joystickX_raw() > 120))
   {
-    bytje = 0b00000000;
+    bytje = 0b00011111;
   } else if (nunchuk_joystickX_raw() < 55) //links
   {
     bytje = 0b00000111;
@@ -149,6 +149,6 @@ void check_buttonZ()
 {
   if(nunchuk_buttonC())
   {
-    bytje = 0b11111111;
+    bytje = 0b00000000;
   }
 }

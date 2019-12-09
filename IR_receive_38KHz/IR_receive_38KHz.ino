@@ -56,24 +56,24 @@ ISR(INT1_vect)
   {
     bit_positie = 7;
     data_byte[8] = {0};
-    if(data_correct == 0)
+    if(data_correct == 5)
     {
-      middle = 1;
+      middle++;
     }else if(data_correct == 1)
     {
-      up = 1;
+      up++;
     }else if(data_correct == 2)
     {
-      down = 1;
+      down++;
     }else if(data_correct == 3)
     {
-      left = 1;
+      left++;
     }else if(data_correct == 4)
     {
-      right = 1;
-    }else if(data_correct == 8)
+      right++;
+    }else if(data_correct == 0)
     {
-      buttonc = 1;
+      buttonc++;
     }
     data_correct = 0;
   }
@@ -93,27 +93,32 @@ int main()
 
   while (1)
   {
-    if(middle)
+    if(middle > 3)
     {
       Serial.println("MIDDLE");
       middle = 0;
-    }else if(up)
+    }
+    if(up > 3)
     {
       Serial.println("UP");
       up = 0;
-    }else if(down)
+    }
+    if(down > 3)
     {
       Serial.println("DOWN");
       down = 0;
-    }else if(left)
+    }
+    if(left > 3)
     {
       Serial.println("LEFT");
       left = 0;
-    }else if(right)
+    }
+    if(right > 3)
     {
       Serial.println("RIGHT");
       right = 0;
-    }else if(buttonc)
+    }
+    if(buttonc > 3)
     {
       Serial.println("BUTTONC");
       buttonc = 0;
