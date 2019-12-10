@@ -23,6 +23,15 @@
 #define BOMB "/bom.bmp"
 #define GROUND "/blok.bmp"
 
+#define SD_CS   4 // SD card select pin
+#define TFT_CS 10 // TFT select pin
+#define TFT_DC  9 // TFT display/command pin
+
+SdFat SD;
+Adafruit_ImageReader reader(SD);
+
+Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC);
+
 uint8_t BORDER_UP = 192;
 uint8_t BORDER_DOWN = 32;
 uint8_t BORDER_LEFT = 96;
@@ -40,27 +49,27 @@ int P2_x_bom;
 int P1_y_bom;
 int P1_x_bom;
 
-int up;
-int rechts;
-int links;
-int onder;
+uint8_t up;
+uint8_t rechts;
+uint8_t links;
+uint8_t onder;
 
-const int rows = 12;
-const int columns = 12;
-const int width = 160;
-const int height =  160;
+const uint8_t rows = 12;
+const uint8_t columns = 12;
+const uint8_t width = 160;
+const uint8_t height =  160;
 
 int grid[rows][columns];
 
 int bomb_location[rows][columns] = {0};
 
-int bomb_counter = 0;
-int bomb_set;
-int explode = 0;
-int ground_once;
-int refresh_once;
+uint8_t bomb_counter = 0;
+uint8_t bomb_set;
+uint8_t explode = 0;
+uint8_t ground_once;
+uint8_t refresh_once;
 
-int pixel = 16;
+const uint8_t pixel = 16;
 
 //------RECEIVE DEPARTMENT---------
 int counter = 0;
@@ -68,25 +77,14 @@ int prev_counter = 0;
 int current_counter = 0;
 int difference_counters = 0;
 int count_interrupts = 0;
-int bit_positie = 7;
-int falling_edge = 1;
+uint8_t bit_positie = 7;
+uint8_t falling_edge = 1;
 
 uint8_t data_correct = 0;
-int data_byte[9];
 
-int P2_middle, P2_up, P2_down, P2_left, P2_right, P2_buttonc;
+uint8_t P2_middle, P2_up, P2_down, P2_left, P2_right, P2_buttonc;
 
 //----------RECEIVE DEPARTMENT---------
-
-#define SD_CS   4 // SD card select pin
-#define TFT_CS 10 // TFT select pin
-#define TFT_DC  9 // TFT display/command pin
-
-SdFat SD;
-Adafruit_ImageReader reader(SD);
-
-Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC);
-
 
 //setups
 void timer1_setup();
@@ -113,6 +111,9 @@ void P2_go_left();
 void P2_go_down();
 void P2_place_bomb();
 void P2_explode_bomb();
+
+void move_P1();
+void move_P2();
 
 ISR(TIMER1_COMPA_vect)
 {
@@ -169,20 +170,17 @@ ISR(INT1_vect)
 
   if (difference_counters >= 290 && difference_counters <= 390 && (count_interrupts % 2 == 0)) //is 1
   {
-    data_byte[bit_positie] = 1;
     bit_positie--;
     count_interrupts = 0;
     data_correct++;
   } else if (difference_counters <= 200 && difference_counters >= 100 && (count_interrupts % 2 == 0)) //is 0
   {
-    data_byte[bit_positie] = 0;
     bit_positie--;
     count_interrupts = 0;
   }
   if (bit_positie < 0)
   {
     bit_positie = 7;
-    data_byte[8] = {0};
     if (data_correct == 5)
     {
       P2_middle++;
@@ -209,7 +207,7 @@ ISR(INT1_vect)
 int main(void)
 {
   init();
-  Serial.begin(9600);
+  //Serial.begin(9600);
   lcd_setup();
   setupWire();
   timer1_setup();
@@ -221,122 +219,126 @@ int main(void)
 
   while (1)
   {
-    if (P2_middle > 3)
+    //move_P2();
+    if (nunchuk_read())
     {
-      Serial.println("MIDDLE");
+      move_P1();
+    }
+  }
+}
+
+void move_P1()
+{
+  if (up)
+  {
+    if (!grid[((208 - P1_y_waarde) / pixel) - 1][(P1_x_waarde - 80) / pixel])
+    {
+      P1_go_up();
+    }
+    up = 0;
+  }
+
+  if (rechts)
+  {
+    if (!grid[((208 - P1_y_waarde) / pixel)][((P1_x_waarde - 80) / pixel) + 1])
+    {
+      P1_go_right();
+    }
+    rechts = 0;
+  }
+
+  if (links)
+  {
+    if (!grid[((208 - P1_y_waarde) / pixel)][((P1_x_waarde - 80) / pixel) - 1])
+    {
+      P1_go_left();
+    }
+    links = 0;
+  }
+
+  if (onder)
+  {
+    if (!grid[((208 - P1_y_waarde) / pixel) + 1][(P1_x_waarde - 80) / pixel])
+    {
+      P1_go_down();
+    }
+    onder = 0;
+  }
+
+  if (nunchuk_buttonC())
+  {
+    if (bomb_set == 0)
+    {
+      P1_place_bomb();
+      ground_once = 1;
+    }
+  }
+
+  if (bomb_set == 0 && ground_once == 1)
+  {
+    bomb_counter = 0;
+    ImageReturnCode remove_bomb = reader.drawBMP(GROUND, tft, P1_y_bom, P1_x_bom);
+    ground_once = 0;
+  }
+
+  if (explode)
+  {
+    P1_explode_bomb();
+    explode = 0;
+  }
+  ImageReturnCode set = reader.drawBMP("/shadow.bmp", tft, 208, 96);
+}
+/*
+void move_P2()
+{
+  if (P2_middle > 3)
+    {
+      //Serial.println("MIDDLE");
       P2_middle = 0;
     }
     if (P2_up > 3)
     {
-      Serial.println("UP");
+      //Serial.println("UP");
       P2_go_up();
       P2_up = 0;
     }
     if (P2_down > 3)
     {
-      Serial.println("DOWN");
+      //Serial.println("DOWN");
       P2_go_down();
       P2_down = 0;
     }
     if (P2_left > 3)
     {
-      Serial.println("LEFT");
+      //Serial.println("LEFT");
       P2_go_left();
       P2_left = 0;
     }
     if (P2_right > 3)
     {
-      Serial.println("RIGHT");
+      //Serial.println("RIGHT");
       P2_go_right();
       P2_right = 0;
     }
     if (P2_buttonc > 3)
     {
-      Serial.println("BUTTONC");
+      //Serial.println("BUTTONC");
       P2_place_bomb();
       P2_buttonc = 0;
     }
-    if (nunchuk_read())
-    {
-      if (up)
-      {
-        if (!grid[((208 - P1_y_waarde) / pixel) - 1][(P1_x_waarde - 80) / pixel])
-        {
-          P1_go_up();
-        }
-        up = 0;
-      }
-
-      if (rechts)
-      {
-        if (!grid[((208 - P1_y_waarde) / pixel)][((P1_x_waarde - 80) / pixel) + 1])
-        {
-          P1_go_right();
-        }
-        rechts = 0;
-      }
-
-      if (links)
-      {
-        if (!grid[((208 - P1_y_waarde) / pixel)][((P1_x_waarde - 80) / pixel) - 1])
-        {
-          P1_go_left();
-        }
-        links = 0;
-      }
-
-      if (onder)
-      {
-        if (!grid[((208 - P1_y_waarde) / pixel) + 1][(P1_x_waarde - 80) / pixel])
-        {
-          P1_go_down();
-        }
-        onder = 0;
-      }
-
-      if (nunchuk_buttonC())
-      {
-        if (bomb_set == 0)
-        {
-          P1_place_bomb();
-          ground_once = 1;
-        }
-      }
-
-      if (bomb_set == 0 && ground_once == 1)
-      {
-        bomb_counter = 0;
-        ImageReturnCode remove_bomb = reader.drawBMP(GROUND, tft, P1_y_bom, P1_x_bom);
-        ground_once = 0;
-      }
-
-      if (explode)
-      {
-        P1_explode_bomb();
-        explode = 0;
-      }
-
-      ImageReturnCode set = reader.drawBMP("/shadow.bmp", tft, 208, 96);
-    }
-
-  }
 }
-
+*/
 void timer1_setup()
 {
-  cli(); // stop interrupts
-  TCCR1A = 0; // set entire TCCR1A register to 0
-  TCCR1B = 0; // same for TCCR1B
-  TCNT1  = 0; // initialize counter value to 0
-  // set compare match register for 120.00480019200768 Hz increments
+  cli();
+  TCCR1A = 0;
+  TCCR1B = 0;
+  TCNT1  = 0;
   OCR1A = 12000;
-  // turn on CTC mode
   TCCR1B |= (1 << WGM12);
-  // Set CS12, CS11 and CS10 bits for 8 prescaler
   TCCR1B |= (1 << CS12) | (0 << CS11) | (0 << CS10);
-  // enable timer compare interrupt
   TIMSK1 |= (1 << OCIE1A);
-  sei(); // allow interrupts
+  sei();
 }
 
 void setupWire()
@@ -347,15 +349,14 @@ void setupWire()
 
 void lcd_setup()
 {
-  tft.begin();          // Initialize screen
+  tft.begin();
   SD.begin(SD_CS, SD_SCK_MHZ(25));
 }
 
 void map_setup()
 {
-  ImageReturnCode stat; // Status from image-reading functions
+  ImageReturnCode stat;
   stat = reader.drawBMP("/map.bmp", tft, 0, 0);
-  //ImageReturnCode char_refresh = reader.drawBMP(PLAYER1, tft, P1_y_waarde - 176, P1_x_waarde + 160);
 
   for (int row = 2; row <= 10; row = row + 2)
   {
@@ -585,6 +586,8 @@ void P2_explode_bomb()
     tft.fillRect(P2_y_bom, P2_x_bom - pixel, pixel, pixel,  0xF0F0F0);
   }
 }
+
+
 void setup_pin3()
 {
   DDRD &= ~(1 << DDD3);
