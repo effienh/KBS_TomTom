@@ -22,6 +22,12 @@
 #define PLAYER2 "/thierry.bmp"
 #define BOMB "/bom.bmp"
 #define GROUND "/blok.bmp"
+#define KIST "/kist.bmp"
+#define SPREAD_MID "/bom_spread_mid.bmp"
+#define SPREAD_RIGHT "/bom_spread_right.bmp"
+#define SPREAD_UP "/bom_spread_up.bmp"
+#define SPREAD_LEFT "/bom_spread_left.bmp"
+#define SPREAD_DOWN "/bom_spread_down.bmp"
 
 uint8_t BORDER_UP = 192;
 uint8_t BORDER_DOWN = 32;
@@ -34,25 +40,44 @@ int x_waarde = 96;
 int y_bom;
 int x_bom;
 
+int first = 0;
+
 int up;
 int rechts;
 int links;
 int onder;
 
-const int rows = 12;
-const int columns = 12;
+const int rows = 13;
+const int columns = 13;
 const int width = 160;
 const int height =  160;
 
-int grid[rows][columns];
-
-int bomb_location[rows][columns] = {0};
+uint8_t grid[rows][columns]
+{
+  {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+  {1, 0, 0, 2, 2, 2, 2, 2, 2, 2, 0, 0, 1},
+  {1, 0, 1, 2, 1, 2, 1, 2, 1, 2, 1, 0, 1},
+  {1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1},
+  {1, 2, 1, 2, 1, 0, 1, 0, 1, 2, 1, 2, 1},
+  {1, 2, 2, 2, 0, 0, 0, 0, 0, 2, 2, 2, 1},
+  {1, 2, 1, 2, 1, 0, 1, 0, 1, 2, 1, 2, 1},
+  {1, 2, 2, 2, 0, 0, 0, 0, 0, 2, 2, 2, 1},
+  {1, 2, 1, 2, 1, 0, 1, 0, 1, 2, 1, 2, 1},
+  {1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1},
+  {1, 0, 1, 2, 1, 2, 1, 2, 1, 2, 1, 0, 1},
+  {1, 0, 0, 2, 2, 2, 2, 2, 2, 2, 0, 0, 1},
+  {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+};
 
 int bomb_counter = 0;
 int bomb_set;
 int explode = 0;
 int ground_once;
 int refresh_once;
+
+int spread_counter;
+int spread_set;
+int boom;
 
 int pixel = 16;
 
@@ -79,6 +104,7 @@ void go_left();
 void go_down();
 void place_bomb();
 void explode_bomb();
+void remove_block();
 
 ISR(TIMER1_COMPA_vect)
 {
@@ -108,6 +134,18 @@ ISR(TIMER1_COMPA_vect)
   {
     explode = 1;
     bomb_set = 0;
+    spread_set = 1;
+  }
+
+  if (spread_set)
+  {
+    spread_counter++;
+  }
+
+  if (spread_counter >= 8)
+  {
+    boom = 1;
+    spread_counter = 0;
   }
 }
 
@@ -159,13 +197,17 @@ int main(void)
         onder = 0;
       }
 
-      if (nunchuk_buttonZ())
+      if (nunchuk_buttonC())
       {
-        if (bomb_set == 0)
+        if (bomb_set == 0 && spread_set == 0)
         {
-          place_bomb();
-          ground_once = 1;
+          if (first)
+          {
+            place_bomb();
+            ground_once = 1;
+          }
         }
+        first = 1;
       }
 
       if (bomb_set == 0 && ground_once == 1)
@@ -179,6 +221,13 @@ int main(void)
       {
         explode_bomb();
         explode = 0;
+      }
+
+      if (boom)
+      {
+        remove_block();
+        boom = 0;
+        spread_set = 0;
       }
 
       ImageReturnCode set = reader.drawBMP("/shadow.bmp", tft, 208, 96);
@@ -222,121 +271,135 @@ void map_setup()
   stat = reader.drawBMP("/map.bmp", tft, 0, 0);
   ImageReturnCode char_refresh = reader.drawBMP(PLAYER1, tft, y_waarde - 176, x_waarde + 160);
 
-  for (int row = 2; row <= 10; row = row + 2)
+  for (int row = 1; row <= 11; row++)
   {
-    for (int column = 2; column <= 10; column = column + 2)
+    for (int column = 1; column <= 11; column++)
     {
-      grid[row][column] = 1;
+      if (grid[row][column] == 2)
+      {
+        ImageReturnCode chest = reader.drawBMP(KIST, tft, 208 - (row * pixel), 80 + column * pixel);
+      }
     }
   }
 }
 
 void go_up()
 {
-  if (y_waarde >= BORDER_UP)
+  y_waarde = y_waarde + pixel;
+  ImageReturnCode char_refresh = reader.drawBMP(PLAYER2, tft, y_waarde, x_waarde);
+  if (refresh_once == 0)
   {
-    y_waarde = BORDER_UP;
+    ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_waarde - pixel, x_waarde);
   } else
   {
-    y_waarde = y_waarde + pixel;
-    ImageReturnCode char_refresh = reader.drawBMP(PLAYER2, tft, y_waarde, x_waarde);
-    if (refresh_once == 0)
-    {
-      ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_waarde - pixel, x_waarde);
-    } else
-    {
-      refresh_once = 0;
-    }
+    refresh_once = 0;
   }
 }
 
 void go_right()
 {
-  if (x_waarde >= BORDER_RIGHT)
+  x_waarde = x_waarde + pixel;
+  ImageReturnCode char_refresh = reader.drawBMP(PLAYER2, tft, y_waarde, x_waarde);
+  if (refresh_once == 0)
   {
-    x_waarde = BORDER_RIGHT;
+    ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_waarde, x_waarde - pixel);
   } else
   {
-    x_waarde = x_waarde + pixel;
-    ImageReturnCode char_refresh = reader.drawBMP(PLAYER2, tft, y_waarde, x_waarde);
-    if (refresh_once == 0)
-    {
-      ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_waarde, x_waarde - pixel);
-    } else
-    {
-      refresh_once = 0;
-    }
+    refresh_once = 0;
   }
 }
 
 void go_left()
 {
-  if (x_waarde <= BORDER_LEFT)
+  x_waarde = x_waarde - pixel;
+  ImageReturnCode char_refresh = reader.drawBMP(PLAYER2, tft, y_waarde, x_waarde);
+  if (refresh_once == 0)
   {
-    x_waarde = BORDER_LEFT;
+    ImageReturnCode ground_refresh = reader.drawBMP(GROUND , tft, y_waarde, x_waarde + pixel);
   } else
   {
-    x_waarde = x_waarde - pixel;
-    ImageReturnCode char_refresh = reader.drawBMP(PLAYER2, tft, y_waarde, x_waarde);
-    if (refresh_once == 0)
-    {
-      ImageReturnCode ground_refresh = reader.drawBMP(GROUND , tft, y_waarde, x_waarde + pixel);
-    } else
-    {
-      refresh_once = 0;
-    }
+    refresh_once = 0;
   }
 }
 
 void go_down()
 {
-  if (y_waarde <= BORDER_DOWN)
+
+  y_waarde = y_waarde - pixel;
+  ImageReturnCode char_refresh = reader.drawBMP(PLAYER2, tft, y_waarde, x_waarde);
+  if (refresh_once == 0)
   {
-    y_waarde = BORDER_DOWN;
+    ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_waarde + pixel, x_waarde);
   } else
   {
-    y_waarde = y_waarde - pixel;
-    ImageReturnCode char_refresh = reader.drawBMP(PLAYER2, tft, y_waarde, x_waarde);
-    if (refresh_once == 0)
-    {
-      ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_waarde + pixel, x_waarde);
-    } else
-    {
-      refresh_once = 0;
-    }
+    refresh_once = 0;
   }
 }
 
 void place_bomb()
 {
   y_bom = y_waarde;
+
   x_bom = x_waarde;
   refresh_once = 1;
 
+  grid[(208 - y_bom) / pixel][(x_bom - 80) / pixel] = 1;
   ImageReturnCode place_bomb = reader.drawBMP(BOMB, tft, y_bom, x_bom);
   bomb_set = 1;
 }
 
 void explode_bomb()
 {
-  if (!grid[((208 - y_bom) / pixel)][(x_bom - 80) / pixel])//spread bomb
+  grid[(208 - y_bom) / pixel][(x_bom - 80) / pixel] = 0;
+
+  if (grid[((208 - y_bom) / pixel)][(x_bom - 80) / pixel] != 1)//spread bomb
   {
-    tft.fillRect(y_bom, x_bom, pixel, pixel, 0xF0F0F0);
+    ImageReturnCode explode = reader.drawBMP(SPREAD_MID, tft, y_bom, x_bom);
   }
-  if (!grid[((208 - y_bom) / pixel) - 1][(x_bom - 80) / pixel] && y_bom + 1 <= BORDER_UP)//spread up
+  if (grid[((208 - y_bom) / pixel) - 1][(x_bom - 80) / pixel] != 1)//spread up
   {
-    tft.fillRect(y_bom + pixel, x_bom, pixel, pixel,  0xF0F0F0);
+    ImageReturnCode explode = reader.drawBMP(SPREAD_UP, tft, y_bom + pixel, x_bom);
   }
-  if (!grid[((208 - y_bom) / pixel) + 1][(x_bom - 80) / pixel] && y_bom - 1 <= BORDER_DOWN)//spread down
+  if (grid[((208 - y_bom) / pixel) + 1][(x_bom - 80) / pixel] != 1)//spread down
   {
-    tft.fillRect(y_bom - pixel, x_bom, pixel, pixel,  0xF0F0F0);
+    ImageReturnCode explode = reader.drawBMP(SPREAD_DOWN, tft, y_bom - pixel, x_bom);
   }
-  if (!grid[((208 - y_bom) / pixel)][((x_bom - 80) / pixel) + 1] && x_bom + 1 < BORDER_RIGHT)//spread right
+  if (grid[((208 - y_bom) / pixel)][((x_bom - 80) / pixel) + 1] != 1)//spread right
   {
-    tft.fillRect(y_bom, x_bom + pixel, pixel, pixel, 0xF0F0F0);
+    ImageReturnCode explode = reader.drawBMP(SPREAD_RIGHT, tft, y_bom, x_bom + pixel);
   }
-  if (!grid[((208 - y_bom) / pixel)][((x_bom - 80) / pixel) + 1] && x_bom - 1 > BORDER_LEFT)//spread left
+  if (grid[((208 - y_bom) / pixel)][((x_bom - 80) / pixel) - 1] != 1)//spread left
   {
-    tft.fillRect(y_bom, x_bom - pixel, pixel, pixel,  0xF0F0F0);
+    ImageReturnCode explode = reader.drawBMP(SPREAD_LEFT, tft, y_bom, x_bom - pixel);
+  }
+}
+
+
+void remove_block()
+{
+  if (grid[((208 - y_bom) / pixel)][(x_bom - 80) / pixel] != 1)//spread bomb
+  {
+    grid[((208 - y_bom) / pixel)][(x_bom - 80) / pixel] = 0;
+    ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_bom, x_bom);
+  }
+  if (grid[((208 - y_bom) / pixel) - 1][(x_bom - 80) / pixel] != 1)//spread up
+  {
+    grid[((208 - y_bom) / pixel) - 1][(x_bom - 80) / pixel] = 0;
+    ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_bom + pixel, x_bom);
+  }
+  if (grid[((208 - y_bom) / pixel) + 1][(x_bom - 80) / pixel] != 1)//spread down
+  {
+    grid[((208 - y_bom) / pixel) + 1][(x_bom - 80) / pixel] = 0;
+    ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_bom - pixel, x_bom);
+  }
+  if (grid[((208 - y_bom) / pixel)][((x_bom - 80) / pixel) + 1] != 1)//spread right
+  {
+    grid[((208 - y_bom) / pixel)][((x_bom - 80) / pixel) + 1] = 0;
+    ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_bom, x_bom + pixel);
+  }
+  if (grid[((208 - y_bom) / pixel)][((x_bom - 80) / pixel) - 1] != 1)//spread left
+  {
+    grid[((208 - y_bom) / pixel)][((x_bom - 80) / pixel) - 1] = 0;
+    ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_bom, x_bom - pixel);
   }
 }
