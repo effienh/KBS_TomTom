@@ -1,35 +1,83 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
+#include <Nunchuk.h>
+#include <Wire.h>
 
-int counter = 0;
-int prev_counter = 0;
-int current_counter = 0;
-int difference_counters = 0;
-unsigned int state;
+uint8_t counter = 0;
+uint8_t prev_counter = 0;
+uint8_t current_counter = 0;
+uint8_t difference_counters = 0;
+uint8_t count_interrupts = 0;
+uint8_t bit_positie = 7;
+uint8_t falling_edge = 1;
 
-int falling_edge = 1;
+uint8_t data_correct = 0;
+uint8_t data_byte[9];
+
+uint8_t middle, up, down, left, right, buttonc;
 
 void timer2_setup();
+void PCINT1_setup();
+void setup_pin3();
 
 ISR(TIMER2_COMPA_vect)
 {
   counter++;
-  //Serial.println(counter);
 }
 
 ISR(INT1_vect)
 {
-  EICRA ^= (1<<ISC10);
-  if(falling_edge)
+  EICRA ^= (1 << ISC10);
+  count_interrupts++;
+  if (falling_edge)
   {
     prev_counter = counter;
     falling_edge = 0;
-  }else if(falling_edge == 0)
+  } else
   {
     current_counter = counter;
     falling_edge = 1;
     counter = 0;
     difference_counters = current_counter - prev_counter;
+    counter = 0;
+  }
+
+  if (difference_counters >= 290 && difference_counters <= 390 && (count_interrupts % 2 == 0)) //is 1
+  {
+    data_byte[bit_positie] = 1;
+    bit_positie--;
+    count_interrupts = 0;
+    data_correct++;
+  } else if (difference_counters <= 200 && difference_counters >= 100 && (count_interrupts % 2 == 0)) //is 0
+  {
+    data_byte[bit_positie] = 0;
+    bit_positie--;
+    count_interrupts = 0;
+  }
+  if (bit_positie < 0)
+  {
+    bit_positie = 7;
+    data_byte[8] = {0};
+    if (data_correct == 5)
+    {
+      middle++;
+    } else if (data_correct == 1)
+    {
+      up++;
+    } else if (data_correct == 2)
+    {
+      down++;
+    } else if (data_correct == 3)
+    {
+      left++;
+    } else if (data_correct == 4)
+    {
+      right++;
+    } else if (data_correct == 0)
+    {
+      buttonc++;
+    }
+    data_correct = 0;
   }
 }
 
@@ -41,14 +89,44 @@ int main()
   PCINT1_setup();
   sei();
 
-  while(1)
-  {  
+  while (1)
+  {
+    if(middle > 3)
+    {
+      Serial.println("MIDDLE");
+      middle = 0;
+    }
+    if(up > 3)
+    {
+      Serial.println("UP");
+      up = 0;
+    }
+    if(down > 3)
+    {
+      Serial.println("DOWN");
+      down = 0;
+    }
+    if(left > 3)
+    {
+      Serial.println("LEFT");
+      left = 0;
+    }
+    if(right > 3)
+    {
+      Serial.println("RIGHT");
+      right = 0;
+    }
+    if(buttonc > 3)
+    {
+      Serial.println("BUTTONC");
+      buttonc = 0;
+    }
   }
 }
 
 void setup_pin3()
 {
-  DDRD &= ~(1<<DDD2);
+  DDRD &= ~(1 << DDD3);
 }
 
 void timer2_setup()
@@ -70,7 +148,7 @@ void timer2_setup()
 
 void PCINT1_setup()
 {
-  EIMSK |= (1<<INT1);
-  EICRA |= (1<<ISC11);
-  EICRA |= (1<<ISC10);
+  EIMSK |= (1 << INT1);
+  EICRA |= (1 << ISC11);
+  EICRA |= (1 << ISC10);
 }
