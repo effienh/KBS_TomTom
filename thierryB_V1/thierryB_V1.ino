@@ -28,6 +28,7 @@
 #define SPREAD_UP "/bom_spread_up.bmp"
 #define SPREAD_LEFT "/bom_spread_left.bmp"
 #define SPREAD_DOWN "/bom_spread_down.bmp"
+#define END_SCREEN "/eindscherm_thierry.bmp"
 
 uint16_t y_waarde = 208;
 uint16_t x_waarde = 96;
@@ -322,7 +323,7 @@ void damage_player()
   {
     remove_block();
     game_over = 1;
-    //endscreen (work in progress
+    stat = reader.drawBMP("/END_SCREEN", tft, 0, 0);
   }
 }
 
