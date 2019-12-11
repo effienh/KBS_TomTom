@@ -29,28 +29,23 @@
 #define SPREAD_LEFT "/bom_spread_left.bmp"
 #define SPREAD_DOWN "/bom_spread_down.bmp"
 
-uint8_t BORDER_UP = 192;
-uint8_t BORDER_DOWN = 32;
-uint8_t BORDER_LEFT = 96;
-uint16_t BORDER_RIGHT = 256;
+uint16_t y_waarde = 208;
+uint16_t x_waarde = 96;
 
-int y_waarde = 208;
-int x_waarde = 96;
+uint16_t y_bom;
+uint16_t x_bom;
 
-int y_bom;
-int x_bom;
+uint8_t first = 0;
 
-int first = 0;
+uint8_t up;
+uint8_t rechts;
+uint8_t links;
+uint8_t onder;
 
-int up;
-int rechts;
-int links;
-int onder;
-
-const int rows = 13;
-const int columns = 13;
-const int width = 160;
-const int height =  160;
+const uint8_t rows = 13;
+const uint8_t columns = 13;
+const uint8_t width = 160;
+const uint8_t height =  160;
 
 uint8_t grid[rows][columns]
 {
@@ -69,17 +64,17 @@ uint8_t grid[rows][columns]
   {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
 };
 
-int bomb_counter = 0;
-int bomb_set;
-int explode = 0;
-int ground_once;
-int refresh_once;
+uint8_t bomb_counter = 0;
+uint8_t bomb_set;
+uint8_t explode = 0;
+uint8_t ground_once;
+uint8_t refresh_once;
 
-int spread_counter;
-int spread_set;
-int boom;
+uint8_t spread_counter;
+uint8_t spread_set;
+uint8_t boom;
 
-int pixel = 16;
+const uint8_t pixel = 16;
 
 #define SD_CS   4 // SD card select pin
 #define TFT_CS 10 // TFT select pin
@@ -98,6 +93,7 @@ void lcd_setup();
 void map_setup();
 
 //control functions
+void move_P1();
 void go_up();
 void go_right();
 void go_left();
@@ -161,76 +157,7 @@ int main(void)
   {
     if (nunchuk_read())
     {
-      if (up)
-      {
-        if (!grid[((208 - y_waarde) / pixel) - 1][(x_waarde - 80) / pixel])
-        {
-          go_up();
-        }
-        up = 0;
-      }
-
-      if (rechts)
-      {
-        if (!grid[((208 - y_waarde) / pixel)][((x_waarde - 80) / pixel) + 1])
-        {
-          go_right();
-        }
-        rechts = 0;
-      }
-
-      if (links)
-      {
-        if (!grid[((208 - y_waarde) / pixel)][((x_waarde - 80) / pixel) - 1])
-        {
-          go_left();
-        }
-        links = 0;
-      }
-
-      if (onder)
-      {
-        if (!grid[((208 - y_waarde) / pixel) + 1][(x_waarde - 80) / pixel])
-        {
-          go_down();
-        }
-        onder = 0;
-      }
-
-      if (nunchuk_buttonC())
-      {
-        if (bomb_set == 0 && spread_set == 0)
-        {
-          if (first)
-          {
-            place_bomb();
-            ground_once = 1;
-          }
-        }
-        first = 1;
-      }
-
-      if (bomb_set == 0 && ground_once == 1)
-      {
-        bomb_counter = 0;
-        ImageReturnCode remove_bomb = reader.drawBMP(GROUND, tft, y_bom, x_bom);
-        ground_once = 0;
-      }
-
-      if (explode)
-      {
-        explode_bomb();
-        explode = 0;
-      }
-
-      if (boom)
-      {
-        remove_block();
-        boom = 0;
-        spread_set = 0;
-      }
-
-      ImageReturnCode set = reader.drawBMP("/shadow.bmp", tft, 208, 96);
+      move_P1();
     }
   }
 }
@@ -402,4 +329,78 @@ void remove_block()
     grid[((208 - y_bom) / pixel)][((x_bom - 80) / pixel) - 1] = 0;
     ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_bom, x_bom - pixel);
   }
+}
+
+void move_P1()
+{
+  if (up)
+  {
+    if (!grid[((208 - y_waarde) / pixel) - 1][(x_waarde - 80) / pixel])
+    {
+      go_up();
+    }
+    up = 0;
+  }
+
+  if (rechts)
+  {
+    if (!grid[((208 - y_waarde) / pixel)][((x_waarde - 80) / pixel) + 1])
+    {
+      go_right();
+    }
+    rechts = 0;
+  }
+
+  if (links)
+  {
+    if (!grid[((208 - y_waarde) / pixel)][((x_waarde - 80) / pixel) - 1])
+    {
+      go_left();
+    }
+    links = 0;
+  }
+
+  if (onder)
+  {
+    if (!grid[((208 - y_waarde) / pixel) + 1][(x_waarde - 80) / pixel])
+    {
+      go_down();
+    }
+    onder = 0;
+  }
+
+  if (nunchuk_buttonC())
+  {
+    if (bomb_set == 0 && spread_set == 0)
+    {
+      if (first)
+      {
+        place_bomb();
+        ground_once = 1;
+      }
+    }
+    first = 1;
+  }
+
+  if (bomb_set == 0 && ground_once == 1)
+  {
+    bomb_counter = 0;
+    ImageReturnCode remove_bomb = reader.drawBMP(GROUND, tft, y_bom, x_bom);
+    ground_once = 0;
+  }
+
+  if (explode)
+  {
+    explode_bomb();
+    explode = 0;
+  }
+
+  if (boom)
+  {
+    remove_block();
+    boom = 0;
+    spread_set = 0;
+  }
+
+  ImageReturnCode set = reader.drawBMP("/shadow.bmp", tft, 208, 96);
 }
