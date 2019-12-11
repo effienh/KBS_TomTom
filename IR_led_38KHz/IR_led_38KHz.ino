@@ -5,9 +5,8 @@
 
 int counter1 = 0;
 int counter2 = 0;
-int positie = 7;
-int sent = 0;
-int jannes_zn_va = 0;
+uint8_t positie = 7;
+uint8_t sent = 0;
 
 uint8_t bytje = 0;
 
@@ -15,6 +14,7 @@ void timer2_setup();
 void IR_led_setup();
 void setupWireNunchuk();
 void nunchuk_send_byte();
+void check_buttonZ();
 
 ISR(TIMER2_COMPA_vect)
 {
