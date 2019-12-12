@@ -5,27 +5,27 @@
 
 int counter1 = 0;
 int counter2 = 0;
-uint8_t positie = 7;
-uint8_t sent = 0;
+int positie = 7;
+int sent = 0;
 
-uint8_t bytje = 0;
+int bytje = 0b00000000;
 
-void timer2_setup();
+void timer1_setup();
 void IR_led_setup();
 void setupWireNunchuk();
 void nunchuk_send_byte();
 
-ISR(TIMER2_COMPA_vect)
+ISR(TIMER1_COMPA_vect)
 {
   if (~(bytje | ~(1 << positie)))
   {
-    if (counter1 < 1000)
+    if (counter1 < 200)
     {
       counter1++;
-      PORTD ^= (1 << PORTD3);
+      PORTD ^= (1 << PORTD6);
     }
 
-    if (counter1 >= 1000)
+    if (counter1 >= 200)
     {
       sent = 1;
     }
@@ -33,10 +33,10 @@ ISR(TIMER2_COMPA_vect)
     if (sent)
     {
       counter2++;
-      PORTD &= ~(1 << PORTD3);
+      PORTD &= ~(1 << PORTD6);
     }
 
-    if (counter2 >= 1000)
+    if (counter2 >= 200)
     {
       counter1 = 0;
       counter2 = 0;
@@ -45,13 +45,13 @@ ISR(TIMER2_COMPA_vect)
     }
   } else
   {
-    if (counter1 < 1000)
+    if (counter1 < 200)
     {
       counter1++;
-      PORTD ^= (1 << PORTD3);
+      PORTD ^= (1 << PORTD6);
     }
 
-    if (counter1 >= 1000)
+    if (counter1 >= 200)
     {
       sent = 1;
     }
@@ -59,10 +59,10 @@ ISR(TIMER2_COMPA_vect)
     if (sent)
     {
       counter2++;
-      PORTD &= ~(1 << PORTD3);
+      PORTD &= ~(1 << PORTD6);
     }
 
-    if (counter2 >= 3000)
+    if (counter2 >= 600)
     {
       counter1 = 0;
       counter2 = 0;
@@ -80,7 +80,7 @@ ISR(TIMER2_COMPA_vect)
 int main()
 {
   setupWireNunchuk();
-  timer2_setup();
+  timer1_setup();
   IR_led_setup();
   sei();
 
@@ -99,21 +99,21 @@ void IR_led_setup()
   DDRD |= (1 << DDD6);
 }
 
-void timer2_setup()
+void timer1_setup()
 {
+  // TIMER 1 for interrupt frequency 37735.84905660377 Hz:
   cli(); // stop interrupts
-  TCCR2A = 0; // set entire TCCR2A register to 0
-  TCCR2B = 0; // same for TCCR2B
-  TCNT2  = 0; // initialize counter value to 0
-  // set compare match register for 761904.7619047619 Hz increments
-  OCR2A = 17; // = 16000000 / (1 * 37000) - 1 (must be <256)
+  TCCR1A = 0; // set entire TCCR1A register to 0
+  TCCR1B = 0; // same for TCCR1B
+  TCNT1  = 0; // initialize counter value to 0
+  // set compare match register for 37735.84905660377 Hz increments
+  OCR1A = 284; // = 16000000 / (8 * 37735.84905660377) - 1 (must be <256)
   // turn on CTC mode
-  TCCR2A |= (0 << WGM20) | (1 << WGM21);
-  TCCR2B |= (0 << WGM22);
-  // Set CS22, CS21 and CS20 bits for 1 prescaler
-  TCCR2B |= (0 << CS22) | (1 << CS21) | (0 << CS20);
+  TCCR1B |= (1 << WGM12);
+  // Set CS22, CS21 and CS20 bits for 8 prescaler
+  TCCR1B |= (0 << CS12) | (0 << CS11) | (1 << CS10);
   // enable timer compare interrupt
-  TIMSK2 |= (1 << OCIE2A);
+  TIMSK1 |= (1 << OCIE1A);
 }
 
 void setupWireNunchuk()
