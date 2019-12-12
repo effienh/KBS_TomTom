@@ -3,18 +3,18 @@
 #include <Nunchuk.h>
 #include <Wire.h>
 
-uint8_t counter = 0;
-uint8_t prev_counter = 0;
-uint8_t current_counter = 0;
-uint8_t difference_counters = 0;
-uint8_t count_interrupts = 0;
-uint8_t bit_positie = 7;
-uint8_t falling_edge = 1;
+int counter = 0;
+int prev_counter = 0;
+int current_counter = 0;
+int difference_counters = 0;
+int count_interrupts = 0;
+int bit_positie = 7;
+int falling_edge = 1;
 
-uint8_t data_correct = 0;
-uint8_t data_byte[9];
+int data_correct = 0;
+int data_byte[9];
 
-uint8_t middle, up, down, left, right, buttonc;
+int middle, up, down, left, right, buttonc;
 
 void timer2_setup();
 void PCINT1_setup();
