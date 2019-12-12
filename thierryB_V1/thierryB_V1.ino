@@ -17,6 +17,7 @@
 #define PLAYER2 "/beer.bmp"
 #define BOMB "/bom.bmp"
 #define GROUND "/blok.bmp"
+#define SHADOW "/shadow.bmp"
 #define KIST "/kist.bmp"
 #define SPREAD_MID "/bom_spread_mid.bmp"
 #define SPREAD_RIGHT "/bom_spread_right.bmp"
@@ -38,7 +39,7 @@ uint16_t x_waarde_P1 = 96;
 uint16_t y_waarde_P2 = 32;
 uint16_t x_waarde_P2 = 256;
 
-//Bomb won't explode at the start
+//Makes sure the bomb won't explode at the start
 uint8_t first = 0;
 
 //controls movement in  (Dutch because of compilation errors)
@@ -54,8 +55,9 @@ const uint8_t columns = 13;
 /*
    Grid map:
    0 = ground
-   1 = borders and walls (non-collisiable) and bomb
+   1 = borders and walls (non-collisiable)
    2 = chests (collisiable after explosion)
+   3 = bomb
 */
 uint8_t grid[rows][columns]
 {
@@ -79,7 +81,9 @@ uint8_t bomb_counter = 0;
 uint8_t bomb_set;
 uint8_t explode = 0;
 uint8_t ground_once;
-uint8_t refresh_once;
+uint8_t refresh_once_P1;
+
+uint8_t refresh_once_P2;
 
 //location bomb
 uint16_t y_bom;
@@ -91,8 +95,9 @@ uint8_t spread_set;
 uint8_t boom;
 
 //lifes
-uint8_t life_player = 1;
+uint8_t life_player = 2;
 uint8_t game_over = 0;
+uint8_t damage_done = 0;
 
 //1 block in the grid
 const uint8_t pixel = 16;
@@ -120,6 +125,8 @@ void place_bomb();
 void explode_bomb();
 void remove_block();
 void damage_player();
+void draw_P1();
+void draw_P2();
 
 
 ISR(TIMER1_COMPA_vect)
@@ -141,21 +148,21 @@ ISR(TIMER1_COMPA_vect)
     onder = 1;
   }
 
-  if (bomb_set)
+  if (bomb_set) //is placed when bom is placed
   {
-    bomb_counter++;
+    bomb_counter++; //leaves the bomb for a while
   }
 
   if (bomb_counter >= 10)
   {
     explode = 1;
-    bomb_set = 0;
+    bomb_set = 0; //bomb removes
     spread_set = 1;
   }
 
   if (spread_set)
   {
-    spread_counter++;
+    spread_counter++; //leaves the spread for a while
     damage_player();
   }
 
@@ -173,12 +180,12 @@ int main(void)
   setupWire();
   timer1_setup();
   map_setup();
-  
+
   while (1)
   {
     if (nunchuk_read() && game_over == 0)
     {
-      move_P1();
+      move_P1(); //move functions for PLAYER1
     }
   }
 }
@@ -209,22 +216,22 @@ void setupWire()
 
 void lcd_setup()
 {
-  tft.begin();          // Initialize screen
-  SD.begin(SD_CS, SD_SCK_MHZ(25));
+  tft.begin(); //Initialize screen
+  SD.begin(SD_CS, SD_SCK_MHZ(25)); //starts reading out the SD
 }
 
 void map_setup()
 {
-  ImageReturnCode stat; // Status from image-reading functions
-  stat = reader.drawBMP("/map.bmp", tft, 0, 0);
+  ImageReturnCode stat; //Status from image-reading functions
+  stat = reader.drawBMP("/map.bmp", tft, 0, 0); //draws the map
 
-  for (int row = 1; row <= 11; row++)
+  for (int row = 1; row <= 11; row++) //goes through all rows off the grid
   {
-    for (int column = 1; column <= 11; column++)
+    for (int column = 1; column <= 11; column++) //goes through all columns off the grid
     {
-      if (grid[row][column] == 2)
+      if (grid[row][column] == 2) //checks if a chest needs to be placed
       {
-        ImageReturnCode chest = reader.drawBMP(KIST, tft, 208 - (row * pixel), 80 + column * pixel);
+        ImageReturnCode chest = reader.drawBMP(KIST, tft, 208 - (row * pixel), 80 + column * pixel); //displayes chest on the LCD
       }
     }
   }
@@ -233,209 +240,225 @@ void map_setup()
 void go_up()
 {
   y_waarde_P1 = y_waarde_P1 + pixel;
-  ImageReturnCode char_refresh = reader.drawBMP(PLAYER1, tft, y_waarde_P1, x_waarde_P1);
-  if (refresh_once == 0)
-  {
-    ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_waarde_P1 - pixel, x_waarde_P1);
-  } else
-  {
-    refresh_once = 0;
-  }
+
+  draw_P1();
 }
 
 void go_right()
 {
   x_waarde_P1 = x_waarde_P1 + pixel;
-  ImageReturnCode char_refresh = reader.drawBMP(PLAYER1, tft, y_waarde_P1, x_waarde_P1);
-  if (refresh_once == 0)
-  {
-    ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_waarde_P1, x_waarde_P1 - pixel);
-  } else
-  {
-    refresh_once = 0;
-  }
+
+  draw_P1();
 }
 
 void go_left()
 {
   x_waarde_P1 = x_waarde_P1 - pixel;
-  ImageReturnCode char_refresh = reader.drawBMP(PLAYER1, tft, y_waarde_P1, x_waarde_P1);
-  if (refresh_once == 0)
-  {
-    ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_waarde_P1, x_waarde_P1 + pixel);
-  } else
-  {
-    refresh_once = 0;
-  }
+
+  draw_P1();
 }
 
 void go_down()
 {
   y_waarde_P1 = y_waarde_P1 - pixel;
-  ImageReturnCode char_refresh = reader.drawBMP(PLAYER1, tft, y_waarde_P1, x_waarde_P1);
-  if (refresh_once == 0)
+
+  draw_P1();
+}
+
+void draw_P1()
+{
+  ImageReturnCode char_refresh = reader.drawBMP(PLAYER1, tft, y_waarde_P1, x_waarde_P1); //draws PLAYER1 on y and x coordinates
+
+  if (refresh_once_P1 == 0) //is set after a bomb is placed, makes sure the bomb won't be ereased
   {
-    ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_waarde_P1 + pixel, x_waarde_P1);
+    ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_waarde_P1 + pixel, x_waarde_P1); //makes sure PLAYER1 won't be printed twice
   } else
   {
-    refresh_once = 0;
+    refresh_once_P1 = 0;
   }
+
+}
+
+void draw_P2()
+{
+  ImageReturnCode char_refresh = reader.drawBMP(PLAYER2, tft, y_waarde_P2, x_waarde_P2); //draws PLAYER2 on y and x coordinates
+
+  if (refresh_once_P2 == 0) //is set after a bomb is placed, makes sure the bomb won't be ereased
+  {
+    ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_waarde_P2 + pixel, x_waarde_P2); //makes sure PLAYER2 won't be printed twice
+  } else
+  {
+    refresh_once_P2 = 0;
+  }
+
 }
 
 void place_bomb()
 {
-  y_bom = y_waarde_P1;
+  y_bom = y_waarde_P1; //bomb is placed ON the player
   x_bom = x_waarde_P1;
-  refresh_once = 1;
-  grid[(208 - y_bom) / pixel][(x_bom - 80) / pixel] = 3;
-  ImageReturnCode place_bomb = reader.drawBMP(BOMB, tft, y_bom, x_bom);
-  bomb_set = 1;
+  refresh_once_P1 = 1;
+  grid[(208 - y_bom) / pixel][(x_bom - 80) / pixel] = 3; //places bomb on the map
+  ImageReturnCode place_bomb = reader.drawBMP(BOMB, tft, y_bom, x_bom); //draws the bomb
+  bomb_set = 1; //triggers the counter for the bomb
 }
 
 void explode_bomb()
 {
-  grid[(208 - y_bom) / pixel][(x_bom - 80) / pixel] = 0;
+  grid[(208 - y_bom) / pixel][(x_bom - 80) / pixel] = 0; //remove bomb from the map
 
-  if (grid[((208 - y_bom) / pixel)][(x_bom - 80) / pixel] != 1)//spread bomb
+  if (grid[((208 - y_bom) / pixel)][(x_bom - 80) / pixel] != 1)//spread bomb middle
   {
-    ImageReturnCode explode = reader.drawBMP(SPREAD_MID, tft, y_bom, x_bom);
+    ImageReturnCode explode = reader.drawBMP(SPREAD_MID, tft, y_bom, x_bom); //draw spread on bomb coordinates
   }
   if (grid[((208 - y_bom) / pixel) - 1][(x_bom - 80) / pixel] != 1)//spread up
   {
-    ImageReturnCode explode = reader.drawBMP(SPREAD_UP, tft, y_bom + pixel, x_bom);
+    ImageReturnCode explode = reader.drawBMP(SPREAD_UP, tft, y_bom + pixel, x_bom); //draw spread on bomb coordinates, y + 16
   }
   if (grid[((208 - y_bom) / pixel) + 1][(x_bom - 80) / pixel] != 1)//spread down
   {
-    ImageReturnCode explode = reader.drawBMP(SPREAD_DOWN, tft, y_bom - pixel, x_bom);
+    ImageReturnCode explode = reader.drawBMP(SPREAD_DOWN, tft, y_bom - pixel, x_bom); //draw spread on bomb coordinates, y - 16
   }
   if (grid[((208 - y_bom) / pixel)][((x_bom - 80) / pixel) + 1] != 1)//spread right
   {
-    ImageReturnCode explode = reader.drawBMP(SPREAD_RIGHT, tft, y_bom, x_bom + pixel);
+    ImageReturnCode explode = reader.drawBMP(SPREAD_RIGHT, tft, y_bom, x_bom + pixel); //draw spread on bomb coordinates, x + 16
   }
   if (grid[((208 - y_bom) / pixel)][((x_bom - 80) / pixel) - 1] != 1)//spread left
   {
-    ImageReturnCode explode = reader.drawBMP(SPREAD_LEFT, tft, y_bom, x_bom - pixel);
+    ImageReturnCode explode = reader.drawBMP(SPREAD_LEFT, tft, y_bom, x_bom - pixel); //draw spread on bomb coordinates, x - 16
   }
 }
 
 void damage_player()
 {
-  if ((x_bom == x_waarde_P1 || x_bom == x_waarde_P1 + pixel || x_bom == x_waarde_P1 - pixel) && y_bom == y_waarde_P1)
+  if ((x_bom == x_waarde_P1 || x_bom == x_waarde_P1 + pixel || x_bom == x_waarde_P1 - pixel) && y_bom == y_waarde_P1 && damage_done == 0)
+  { //checks if PLAYER1  walks through bomb spread 
+    life_player--;
+    damage_done = 1; //makes sure the bomb doesn't do damage twice
+  }
+  if (( y_bom == y_waarde_P1 + pixel || y_bom == y_waarde_P1 - pixel) && x_bom == x_waarde_P1 && damage_done == 0)
   {
     life_player--;
+    damage_done = 1; //makes sure the bomb doesn't do damage twice
   }
-  if (( y_bom == y_waarde_P1 + pixel || y_bom == y_waarde_P1 - pixel) && x_bom == x_waarde_P1)
-  {
-    life_player--;
-  }
-  
+
   if (life_player == 0)
   {
-    remove_block();
-    game_over = 1;
-    ImageReturnCode stat2 = reader.drawBMP(EINDSCHERM, tft, 0, 0); //eindscherm
+    remove_block(); //removes bomb spread
+    game_over = 1; //stops the game in the while loop
+    ImageReturnCode stat2 = reader.drawBMP(EINDSCHERM, tft, 0, 0); //end-screen
   }
 }
 
 void remove_block()
 {
-  if (grid[((208 - y_bom) / pixel)][(x_bom - 80) / pixel] != 1)//spread bomb
+  if (grid[((208 - y_bom) / pixel)][(x_bom - 80) / pixel] != 1) //spread bomb middle
   {
-    grid[((208 - y_bom) / pixel)][(x_bom - 80) / pixel] = 0;
-    ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_bom, x_bom);
+    grid[((208 - y_bom) / pixel)][(x_bom - 80) / pixel] = 0; //removes chest if it's placed underneath bomb spread
+    ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_bom, x_bom); //draws ground block on the removed chest
+
+    damage_done = 0; //makes sure the next bomb will do damage
   }
   if (grid[((208 - y_bom) / pixel) - 1][(x_bom - 80) / pixel] != 1)//spread up
   {
-    grid[((208 - y_bom) / pixel) - 1][(x_bom - 80) / pixel] = 0;
-    ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_bom + pixel, x_bom);
+    grid[((208 - y_bom) / pixel) - 1][(x_bom - 80) / pixel] = 0; //removes chest if it's placed underneath bomb spread
+    ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_bom + pixel, x_bom); //draws ground block on the removed chest
+
+    damage_done = 0; //makes sure the next bomb will do damage
   }
   if (grid[((208 - y_bom) / pixel) + 1][(x_bom - 80) / pixel] != 1)//spread down
   {
-    grid[((208 - y_bom) / pixel) + 1][(x_bom - 80) / pixel] = 0;
-    ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_bom - pixel, x_bom);
+    grid[((208 - y_bom) / pixel) + 1][(x_bom - 80) / pixel] = 0; //removes chest if it's placed underneath bomb spread
+    ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_bom - pixel, x_bom); //draws ground block on the removed chest
+
+    damage_done = 0; //makes sure the next bomb will do damage
   }
   if (grid[((208 - y_bom) / pixel)][((x_bom - 80) / pixel) + 1] != 1)//spread right
   {
-    grid[((208 - y_bom) / pixel)][((x_bom - 80) / pixel) + 1] = 0;
-    ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_bom, x_bom + pixel);
+    grid[((208 - y_bom) / pixel)][((x_bom - 80) / pixel) + 1] = 0; //removes chest if it's placed underneath bomb spread
+    ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_bom, x_bom + pixel); //draws ground block on the removed chest
+
+    damage_done = 0; //makes sure the next bomb will do damage
   }
   if (grid[((208 - y_bom) / pixel)][((x_bom - 80) / pixel) - 1] != 1)//spread left
   {
-    grid[((208 - y_bom) / pixel)][((x_bom - 80) / pixel) - 1] = 0;
-    ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_bom, x_bom - pixel);
+    grid[((208 - y_bom) / pixel)][((x_bom - 80) / pixel) - 1] = 0; //removes chest if it's placed underneath bomb spread
+    ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_bom, x_bom - pixel); //draws ground block on the removed chest
+
+    damage_done = 0; //makes sure the next bomb will do damage
   }
 }
 
 void move_P1()
 {
-  if (boven)
+  if (boven) //checks if the nunchuk moves up (in ISR)
   {
-    if (!grid[((208 - y_waarde_P1) / pixel) - 1][(x_waarde_P1 - 80) / pixel])
+    if (!grid[((208 - y_waarde_P1) / pixel) - 1][(x_waarde_P1 - 80) / pixel]) //player can't move over borders, walls, bombs or chests
     {
       go_up();
     }
     boven = 0;
   }
-  
-  if (rechts)
+
+  if (rechts) //checks if the nunchuk moves right (in ISR)
   {
-    if (!grid[((208 - y_waarde_P1) / pixel)][((x_waarde_P1 - 80) / pixel) + 1])
+    if (!grid[((208 - y_waarde_P1) / pixel)][((x_waarde_P1 - 80) / pixel) + 1]) //player can't move over borders, walls, bombs or chests
     {
       go_right();
     }
     rechts = 0;
   }
-  
-  if (links)
+
+  if (links) //checks if the nunchuk moves left (in ISR)
   {
-    if (!grid[((208 - y_waarde_P1) / pixel)][((x_waarde_P1 - 80) / pixel) - 1])
+    if (!grid[((208 - y_waarde_P1) / pixel)][((x_waarde_P1 - 80) / pixel) - 1]) //player can't move over borders, walls, bombs or chests
     {
       go_left();
     }
     links = 0;
   }
-  
-  if (onder)
+
+  if (onder) //checks if the nunchuk moves down (in ISR)
   {
-    if (!grid[((208 - y_waarde_P1) / pixel) + 1][(x_waarde_P1 - 80) / pixel])
+    if (!grid[((208 - y_waarde_P1) / pixel) + 1][(x_waarde_P1 - 80) / pixel]) //player can't move over borders, walls, bombs or chests
     {
       go_down();
     }
     onder = 0;
   }
 
-  if (nunchuk_buttonC())
+  if (nunchuk_buttonC()) //checks if button C is pressed
   {
-    if (bomb_set == 0 && spread_set == 0)
+    if (bomb_set == 0 && spread_set == 0) //makes sure a player can only place one bomb at a time
     {
-      if (first)
+      if (first) //doesn't place a bomb at the start of the game
       {
         place_bomb();
-        ground_once = 1;
+        ground_once = 1; //flag to reset the ground once after a bomb exploded
       }
     }
     first = 1;
   }
-  
-  if (bomb_set == 0 && ground_once == 1)
+
+  if (bomb_set == 0 && ground_once == 1) 
   {
     bomb_counter = 0;
-    ImageReturnCode remove_bomb = reader.drawBMP(GROUND, tft, y_bom, x_bom);
+    ImageReturnCode remove_bomb = reader.drawBMP(GROUND, tft, y_bom, x_bom); //removes the bomb by replacing it with a ground block
     ground_once = 0;
   }
 
-  if (explode)
+  if (explode) //is set when bomb_counter reaches 10 
   {
-    explode_bomb();
+    explode_bomb(); //explodes the bomb after 1.5 seconds
     explode = 0;
   }
 
-  if (boom)
+  if (boom) //is set when spread_counter reaches 8
   {
-    remove_block();
+    remove_block(); //removes the spread from the map
     boom = 0;
     spread_set = 0;
   }
 
-  ImageReturnCode set = reader.drawBMP("/shadow.bmp", tft, 208, 96);
+  ImageReturnCode set = reader.drawBMP(SHADOW , tft, 208, 96);
 }
