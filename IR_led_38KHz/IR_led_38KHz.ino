@@ -5,8 +5,8 @@
 
 int counter1 = 0;
 int counter2 = 0;
-uint8_t positie = 7;
-uint8_t sent = 0;
+int positie = 7;
+int sent = 0;
 
 uint8_t bytje = 0b00000000;
 
