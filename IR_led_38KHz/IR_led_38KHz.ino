@@ -8,11 +8,11 @@ int counter2 = 0;
 uint8_t positie = 7;
 uint8_t sent = 0;
 
-uint8_t bytje = 0;
+uint8_t bytje = 0b00000000;
 
 void timer2_setup();
 void IR_led_setup();
-void setupWireNunchuk();
+//void setupWireNunchuk();
 void nunchuk_send_byte();
 void check_buttonZ();
 
@@ -46,7 +46,8 @@ ISR(TIMER2_COMPA_vect)
     }
   } else
   {
-    if (counter1 < 100 /*&& !nunchuk_middle*/)
+    //Serial.println("1");
+    if (counter1 < 100)
     {
       counter1++;
       PORTD ^= (1 << PORTD6);
@@ -80,18 +81,19 @@ ISR(TIMER2_COMPA_vect)
 
 int main()
 {
-  setupWireNunchuk();
+  //setupWireNunchuk();
   timer2_setup();
   IR_led_setup();
   sei();
 
   while (1)
   {
+    /*
     if (nunchuk_read())
     {
       nunchuk_send_byte();
     }
-    check_buttonZ();
+    check_buttonZ();*/
   }
 }
 
@@ -102,29 +104,29 @@ void IR_led_setup()
 
 void timer2_setup()
 {
+  // TIMER 2 for interrupt frequency 37735.84905660377 Hz:
   cli(); // stop interrupts
   TCCR2A = 0; // set entire TCCR2A register to 0
   TCCR2B = 0; // same for TCCR2B
   TCNT2  = 0; // initialize counter value to 0
-  // set compare match register for 761904.7619047619 Hz increments
-  OCR2A = 52; // = 16000000 / (1 * 37000) - 1 (must be <256)
+  // set compare match register for 37735.84905660377 Hz increments
+  OCR2A = 52; // = 16000000 / (8 * 37735.84905660377) - 1 (must be <256)
   // turn on CTC mode
-  TCCR2A |= (0 << WGM20) | (1 << WGM21);
-  TCCR2B |= (0 << WGM22);
-  // Set CS22, CS21 and CS20 bits for 1 prescaler
+  TCCR2A |= (1 << WGM21);
+  // Set CS22, CS21 and CS20 bits for 8 prescaler
   TCCR2B |= (0 << CS22) | (1 << CS21) | (0 << CS20);
   // enable timer compare interrupt
   TIMSK2 |= (1 << OCIE2A);
 }
 
-void setupWireNunchuk()
+/*void setupWireNunchuk()
 {
   init();
   Wire.begin(0x52);
   Serial.begin(9600);
   nunchuk_init();
-}
-
+}*/
+/*
 void nunchuk_send_byte()
 {
   if (nunchuk_joystickY_raw() > 200) // up
@@ -151,4 +153,4 @@ void check_buttonZ()
   {
     bytje = 0b00000000;
   }
-}
+}*/
