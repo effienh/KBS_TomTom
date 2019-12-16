@@ -159,7 +159,7 @@ int counter2 = 0;
 int positie = 7;
 int sent = 0;
 
-int bytje = 0b00000000;
+uint8_t bytje = 0b00000000;
 
 int counter = 0;
 int prev_counter = 0;
@@ -181,7 +181,7 @@ void timer1_setup();
 void IR_led_setup();
 
 uint8_t count_interrupt0 = 0;
-/*
+
 ISR(TIMER0_COMPA_vect)
 {
   count_interrupt0++;
@@ -254,7 +254,7 @@ ISR(TIMER0_COMPA_vect)
     spread_counter_P2 = 0;
   }
 }
-*/
+
 ISR(TIMER1_COMPA_vect)
 {
   if (~(bytje | ~(1 << positie)))
@@ -389,7 +389,7 @@ int main(void)
   timer2_setup();
   PCINT1_setup();
   sei();
-
+  
   while (1)
   {
     if (nunchuk_read() && game_over == 0)
@@ -780,7 +780,10 @@ void remove_block_P2()
 
 void move_P1()
 {
-  if (boven_P1) //checks if the nunchuk moves up (in ISR)
+  if ((nunchuk_joystickY_raw() < 135 && nunchuk_joystickY_raw() > 120) && (nunchuk_joystickX_raw() < 135 && nunchuk_joystickX_raw() > 120))
+  {
+    bytje = 0b00011111;
+  }else if (boven_P1) //checks if the nunchuk moves up (in ISR)
   {
     if (!grid[((208 - y_waarde_P1) / pixel) - 1][(x_waarde_P1 - 80) / pixel]) //player can't move over borders, walls, bombs or chests
     {
@@ -791,7 +794,7 @@ void move_P1()
     boven_P1 = 0;
   }
 
-  if (rechts_P1) //checks if the nunchuk moves right (in ISR)
+  else if (rechts_P1) //checks if the nunchuk moves right (in ISR)
   {
     if (!grid[((208 - y_waarde_P1) / pixel)][((x_waarde_P1 - 80) / pixel) + 1]) //player can't move over borders, walls, bombs or chests
     {
@@ -802,7 +805,7 @@ void move_P1()
     rechts_P1 = 0;
   }
 
-  if (links_P1) //checks if the nunchuk moves left (in ISR)
+  else if (links_P1) //checks if the nunchuk moves left (in ISR)
   {
     if (!grid[((208 - y_waarde_P1) / pixel)][((x_waarde_P1 - 80) / pixel) - 1]) //player can't move over borders, walls, bombs or chests
     {
@@ -813,7 +816,7 @@ void move_P1()
     links_P1 = 0;
   }
 
-  if (onder_P1) //checks if the nunchuk moves down (in ISR)
+  else if (onder_P1) //checks if the nunchuk moves down (in ISR)
   {
     if (!grid[((208 - y_waarde_P1) / pixel) + 1][(x_waarde_P1 - 80) / pixel]) //player can't move over borders, walls, bombs or chests
     {
@@ -826,12 +829,15 @@ void move_P1()
 
   if (nunchuk_buttonC()) //checks if button C is pressed
   {
+    bytje = 0b00000000;
+    
     if (bomb_set_P1 == 0 && spread_set_P1 == 0) //makes sure a player can only place one bomb at a time
     {
       if (first) //doesn't place a bomb at the start of the game
       {
         place_bomb_P1();
         ground_once_P1 = 1; //flag to reset the ground once after a bomb exploded
+
       }
     }
     first = 1;
@@ -860,8 +866,12 @@ void move_P1()
 
 void move_P2()
 {
-  //check_buttonZ();
 
+if (midden > 3)
+    {
+      //Serial.println("MIDDLE");
+      midden = 0;
+    }
   if (boven > 3)
   {
     if (!grid[((208 - y_waarde_P2) / pixel) - 1][(x_waarde_P2 - 80) / pixel]) //player can't move over borders, walls, bombs or chests
