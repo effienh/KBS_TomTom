@@ -80,28 +80,40 @@ uint8_t grid[13][13]
 
 //bomb controls
 uint8_t bomb_counter_P1 = 0;
-uint8_t bomb_set;
-uint8_t explode = 0;
-uint8_t ground_once;
+uint8_t bomb_set_P1;
+uint8_t explode_P1 = 0;
+uint8_t ground_once_P1;
 uint8_t refresh_once_P1;
 
-
 uint8_t bomb_counter_P2 = 0;
+uint8_t bomb_set_P2;
+uint8_t explode_P2 = 0;
+uint8_t ground_once_P2;
 uint8_t refresh_once_P2;
 
 //location bomb
-uint16_t y_bom;
-uint16_t x_bom;
+uint16_t y_bom_P1;
+uint16_t x_bom_P1;
+
+uint16_t y_bom_P2;
+uint16_t x_bom_P2;
 
 //bomb spread
-uint8_t spread_counter;
-uint8_t spread_set;
-uint8_t boom;
+uint8_t spread_counter_P1;
+uint8_t spread_set_P1;
+uint8_t boom_P1;
+
+uint8_t spread_counter_P2;
+uint8_t spread_set_P2;
+uint8_t boom_P2;
 
 //lifes
-uint8_t life_player = 2;
 uint8_t game_over = 0;
-uint8_t damage_done = 0;
+uint8_t life_P1 = 2;
+uint8_t damage_done_P1 = 0;
+
+uint8_t life_P2 = 2;
+uint8_t damage_done_P2 = 0;
 
 //1 block in the grid
 const uint8_t pixel = 16;
@@ -114,7 +126,7 @@ Adafruit_ImageReader reader(SD);
 Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC);
 
 //setups prototypes
-void timer1_setup();
+void timer0_setup();
 void setupWire();
 void lcd_setup();
 void map_setup();
@@ -125,68 +137,240 @@ void go_up_P1();
 void go_right_P1();
 void go_left_P1();
 void go_down_P1();
-void place_bomb();
-void explode_bomb();
-void remove_block();
-void damage_player();
+void place_bomb_P1();
+void explode_bomb_P1();
+void damage_player_P1();
 void draw_P1();
-void draw_P2();
+void remove_block_P1();
 
 void move_P2();
 void go_up_P2();
 void go_right_P2();
 void go_left_P2();
 void go_down_P2();
+void place_bomb_P2();
+void explode_bomb_P2();
+void damage_player_P2();
+void draw_P2();
+void remove_block_P2();
 
+int counter1 = 0;
+int counter2 = 0;
+int positie = 7;
+int sent = 0;
 
-ISR(TIMER1_COMPA_vect)
+int bytje = 0b00000000;
+
+int counter = 0;
+int prev_counter = 0;
+int current_counter = 0;
+int difference_counters = 0;
+int count_interrupts = 0;
+int bit_positie = 7;
+int falling_edge = 1;
+
+uint8_t data_correct = 0;
+
+int midden, boven, onder, links, rechts, buttonc;
+
+void timer2_setup();
+void PCINT1_setup();
+void setup_pin3();
+
+void timer1_setup();
+void IR_led_setup();
+
+uint8_t count_interrupt0 = 0;
+/*
+ISR(TIMER0_COMPA_vect)
 {
-  if (nunchuk_joystickY_raw() > 200) //up
+  count_interrupt0++;
+  if (count_interrupt0 >= 200)
   {
-    boven_P1 = 1;
-  }
-  if (nunchuk_joystickX_raw() > 200) //right
-  {
-    rechts_P1 = 1;
-  }
-  if (nunchuk_joystickX_raw() < 50) //left
-  {
-    links_P1 = 1;
-  }
-  if (nunchuk_joystickY_raw() < 50) //down
-  {
-    onder_P1 = 1;
+    count_interrupt0 = 0;
+    if (nunchuk_joystickY_raw() > 200) //up
+    {
+      boven_P1 = 1;
+    }
+    if (nunchuk_joystickX_raw() > 200) //right
+    {
+      rechts_P1 = 1;
+    }
+    if (nunchuk_joystickX_raw() < 50) //left
+    {
+      links_P1 = 1;
+    }
+    if (nunchuk_joystickY_raw() < 50) //down
+    {
+      onder_P1 = 1;
+    }
   }
 
-  if (bomb_set) //is placed when bom is placed
+  if (bomb_set_P1) //is placed when bom is placed
   {
     bomb_counter_P1++; //leaves the bomb for a while
   }
 
-  if (bomb_counter_P1 >= 10)
+  if (bomb_counter_P1 >= 2000)
   {
-    explode = 1;
-    bomb_set = 0; //bomb removes
-    spread_set = 1;
+    explode_P1 = 1;
+    bomb_set_P1 = 0; //bomb removes
+    spread_set_P1 = 1;
   }
 
-    if (bomb_counter_P2 >= 10)
+  if (spread_set_P1)
   {
-    explode = 1;
-    bomb_set = 0; //bomb removes
-    spread_set = 1;
+    spread_counter_P1++; //leaves the spread for a while
+    damage_player_P1();
+  }
+  
+  if (spread_counter_P1 >= 1200)
+  {
+    boom_P1 = 1;
+    spread_counter_P1 = 0;
   }
 
-  if (spread_set)
+    if (bomb_set_P2) //is placed when bom is placed
   {
-    spread_counter++; //leaves the spread for a while
-    damage_player();
+    bomb_counter_P2++; //leaves the bomb for a while
   }
 
-  if (spread_counter >= 8)
+  if (bomb_counter_P2 >= 2000)
   {
-    boom = 1;
-    spread_counter = 0;
+    explode_P2 = 1;
+    bomb_set_P2 = 0; //bomb removes
+    spread_set_P2 = 1;
+  }
+
+  if (spread_set_P2)
+  {
+    spread_counter_P2++; //leaves the spread for a while
+    damage_player_P2();
+  }
+  
+  if (spread_counter_P2 >= 1200)
+  {
+    boom_P2 = 1;
+    spread_counter_P2 = 0;
+  }
+}
+*/
+ISR(TIMER1_COMPA_vect)
+{
+  if (~(bytje | ~(1 << positie)))
+  {
+    if (counter1 < 200)
+    {
+      counter1++;
+      PORTD ^= (1 << PORTD6);
+    }
+
+    if (counter1 >= 200)
+    {
+      sent = 1;
+    }
+
+    if (sent)
+    {
+      counter2++;
+      PORTD &= ~(1 << PORTD6);
+    }
+
+    if (counter2 >= 200)
+    {
+      counter1 = 0;
+      counter2 = 0;
+      positie--;
+      sent = 0;
+    }
+  } else
+  {
+    if (counter1 < 200)
+    {
+      counter1++;
+      PORTD ^= (1 << PORTD6);
+    }
+
+    if (counter1 >= 200)
+    {
+      sent = 1;
+    }
+
+    if (sent)
+    {
+      counter2++;
+      PORTD &= ~(1 << PORTD6);
+    }
+
+    if (counter2 >= 600)
+    {
+      counter1 = 0;
+      counter2 = 0;
+      positie--;
+      sent = 0;
+    }
+  }
+
+  if (positie == -1)
+  {
+    positie = 7;
+  }
+}
+
+ISR(TIMER2_COMPA_vect)
+{
+  counter++;
+}
+
+ISR(INT1_vect)
+{
+  EICRA ^= (1 << ISC10);
+  count_interrupts++;
+  if (falling_edge)
+  {
+    prev_counter = counter;
+    falling_edge = 0;
+  } else
+  {
+    current_counter = counter;
+    falling_edge = 1;
+    difference_counters = current_counter - prev_counter;
+    counter = 0;
+  }
+
+  if (difference_counters >= 290 && difference_counters <= 390 && (count_interrupts % 2 == 0)) //is 1
+  {
+    bit_positie--;
+    count_interrupts = 0;
+    data_correct++;
+  } else if (difference_counters <= 200 && difference_counters >= 100 && (count_interrupts % 2 == 0)) //is 0
+  {
+    bit_positie--;
+    count_interrupts = 0;
+  }
+  if (bit_positie < 0)
+  {
+    bit_positie = 7;
+    if (data_correct == 5)
+    {
+      midden++;
+    } else if (data_correct == 1)
+    {
+      boven++;
+    } else if (data_correct == 2)
+    {
+      onder++;
+    } else if (data_correct == 3)
+    {
+      links++;
+    } else if (data_correct == 4)
+    {
+      rechts++;
+    } else if (data_correct == 0)
+    {
+      buttonc++;
+    }
+    data_correct = 0;
   }
 }
 
@@ -194,43 +378,103 @@ int main(void)
 {
   init();
   lcd_setup();
-  setupWire();
-  timer1_setup();
   map_setup();
+  setupWire();
+
+  //send and receive
+  IR_led_setup();
+  setup_pin3();
+  timer0_setup();
+  timer1_setup();
+  timer2_setup();
+  PCINT1_setup();
+  sei();
 
   while (1)
   {
     if (nunchuk_read() && game_over == 0)
-    {
+    { 
       move_P1(); //move functions for PLAYER1
       move_P2(); //move functions for PLAYER2
 
       ImageReturnCode set = reader.drawBMP(SHADOW , tft, 208, 96);
     }
+    check_buttonZ();
   }
+}
+
+void setup_pin3()
+{
+  DDRD &= ~(1 << DDD3);
+}
+
+void IR_led_setup()
+{
+  DDRD |= (1 << DDD6);
 }
 
 void timer1_setup()
 {
+  // TIMER 1 for interrupt frequency 37735.84905660377 Hz:
   cli(); // stop interrupts
   TCCR1A = 0; // set entire TCCR1A register to 0
   TCCR1B = 0; // same for TCCR1B
   TCNT1  = 0; // initialize counter value to 0
-  // set compare match register for 120.00480019200768 Hz increments
-  OCR1A = 12000;
+  // set compare match register for 37735.84905660377 Hz increments
+  OCR1A = 284; // = 16000000 / (8 * 37735.84905660377) - 1 (must be <256)
   // turn on CTC mode
   TCCR1B |= (1 << WGM12);
-  // Set CS12, CS11 and CS10 bits for 8 prescaler
-  TCCR1B |= (1 << CS12) | (0 << CS11) | (0 << CS10);
+  // Set CS22, CS21 and CS20 bits for 8 prescaler
+  TCCR1B |= (0 << CS12) | (0 << CS11) | (1 << CS10);
   // enable timer compare interrupt
   TIMSK1 |= (1 << OCIE1A);
+}
+
+void timer2_setup()
+{
+  // TIMER 2 for interrupt frequency 37735.84905660377 Hz:
+  cli(); // stop interrupts
+  TCCR2A = 0; // set entire TCCR2A register to 0
+  TCCR2B = 0; // same for TCCR2B
+  TCNT2  = 0; // initialize counter value to 0
+  // set compare match register for 37735.84905660377 Hz increments
+  OCR2A = 52; // = 16000000 / (8 * 37735.84905660377) - 1 (must be <256)
+  // turn on CTC mode
+  TCCR2A |= (1 << WGM21);
+  // Set CS22, CS21 and CS20 bits for 8 prescaler
+  TCCR2B |= (0 << CS22) | (1 << CS21) | (0 << CS20);
+  // enable timer compare interrupt
+  TIMSK2 |= (1 << OCIE2A);
+}
+
+void PCINT1_setup()
+{
+  EIMSK |= (1 << INT1);
+  EICRA |= (1 << ISC11);
+  EICRA |= (1 << ISC10);
+}
+
+void timer0_setup()
+{
+  // TIMER 0 for interrupt frequency 62.00396825396825 Hz:
+  cli(); // stop interrupts
+  TCCR0A = 0; // set entire TCCR0A register to 0
+  TCCR0B = 0; // same for TCCR0B
+  TCNT0  = 0; // initialize counter value to 0
+  // set compare match register for 1000 Hz increments
+  OCR0A = 249; // = 16000000 / (64 * 1000) - 1 (must be <256)
+  // turn on CTC mode
+  TCCR0A |= (1 << WGM01);
+  // Set CS02, CS01 and CS00 bits for 64 prescaler
+  TCCR0B |= (0 << CS02) | (1 << CS01) | (1 << CS00);
+  // enable timer compare interrupt
+  TIMSK0 |= (1 << OCIE0A);
   sei(); // allow interrupts
 }
 
 void setupWire()
 {
-  Wire.begin();
-  init();
+  Wire.begin(0x52);
   nunchuk_init();
 }
 
@@ -341,99 +585,196 @@ void draw_P2()
 
 }
 
-void place_bomb()
+void place_bomb_P1()
 {
-  y_bom = y_waarde_P1; //bomb is placed ON the player
-  x_bom = x_waarde_P1;
+  y_bom_P1 = y_waarde_P1; //bomb is placed ON the player
+  x_bom_P1 = x_waarde_P1;
   refresh_once_P1 = 1;
-  grid[(208 - y_bom) / pixel][(x_bom - 80) / pixel] = 3; //places bomb on the map
-  ImageReturnCode place_bomb = reader.drawBMP(BOMB, tft, y_bom, x_bom); //draws the bomb
-  bomb_set = 1; //triggers the counter for the bomb
+  grid[(208 - y_bom_P1) / pixel][(x_bom_P1 - 80) / pixel] = 3; //places bomb on the map
+  ImageReturnCode place_bomb = reader.drawBMP(BOMB, tft, y_bom_P1, x_bom_P1); //draws the bomb
+  bomb_set_P1 = 1; //triggers the counter for the bomb
 }
 
-void explode_bomb()
+void place_bomb_P2()
 {
-  grid[(208 - y_bom) / pixel][(x_bom - 80) / pixel] = 0; //remove bomb from the map
+  y_bom_P2 = y_waarde_P2; //bomb is placed ON the player
+  x_bom_P2 = x_waarde_P2;
+  refresh_once_P2 = 1;
+  grid[(208 - y_bom_P2) / pixel][(x_bom_P2 - 80) / pixel] = 3; //places bomb on the map
+  ImageReturnCode place_bomb = reader.drawBMP(BOMB, tft, y_bom_P2, x_bom_P2); //draws the bomb
+  bomb_set_P2 = 1; //triggers the counter for the bomb
+}
 
-  if (grid[((208 - y_bom) / pixel)][(x_bom - 80) / pixel] != 1)//spread bomb middle
+void explode_bomb_P1()
+{
+  grid[(208 - y_bom_P1) / pixel][(x_bom_P1 - 80) / pixel] = 0; //remove bomb from the map
+
+  if (grid[((208 - y_bom_P1) / pixel)][(x_bom_P1 - 80) / pixel] != 1)//spread bomb middle
   {
-    ImageReturnCode explode = reader.drawBMP(SPREAD_MID, tft, y_bom, x_bom); //draw spread on bomb coordinates
+    ImageReturnCode explode = reader.drawBMP(SPREAD_MID, tft, y_bom_P1, x_bom_P1); //draw spread on bomb coordinates
   }
-  if (grid[((208 - y_bom) / pixel) - 1][(x_bom - 80) / pixel] != 1)//spread up
+  if (grid[((208 - y_bom_P1) / pixel) - 1][(x_bom_P1 - 80) / pixel] != 1)//spread up
   {
-    ImageReturnCode explode = reader.drawBMP(SPREAD_UP, tft, y_bom + pixel, x_bom); //draw spread on bomb coordinates, y + 16
+    ImageReturnCode explode = reader.drawBMP(SPREAD_UP, tft, y_bom_P1 + pixel, x_bom_P1); //draw spread on bomb coordinates, y + 16
   }
-  if (grid[((208 - y_bom) / pixel) + 1][(x_bom - 80) / pixel] != 1)//spread down
+  if (grid[((208 - y_bom_P1) / pixel) + 1][(x_bom_P1 - 80) / pixel] != 1)//spread down
   {
-    ImageReturnCode explode = reader.drawBMP(SPREAD_DOWN, tft, y_bom - pixel, x_bom); //draw spread on bomb coordinates, y - 16
+    ImageReturnCode explode = reader.drawBMP(SPREAD_DOWN, tft, y_bom_P1 - pixel, x_bom_P1); //draw spread on bomb coordinates, y - 16
   }
-  if (grid[((208 - y_bom) / pixel)][((x_bom - 80) / pixel) + 1] != 1)//spread right
+  if (grid[((208 - y_bom_P1) / pixel)][((x_bom_P1 - 80) / pixel) + 1] != 1)//spread right
   {
-    ImageReturnCode explode = reader.drawBMP(SPREAD_RIGHT, tft, y_bom, x_bom + pixel); //draw spread on bomb coordinates, x + 16
+    ImageReturnCode explode = reader.drawBMP(SPREAD_RIGHT, tft, y_bom_P1, x_bom_P1 + pixel); //draw spread on bomb coordinates, x + 16
   }
-  if (grid[((208 - y_bom) / pixel)][((x_bom - 80) / pixel) - 1] != 1)//spread left
+  if (grid[((208 - y_bom_P1) / pixel)][((x_bom_P1 - 80) / pixel) - 1] != 1)//spread left
   {
-    ImageReturnCode explode = reader.drawBMP(SPREAD_LEFT, tft, y_bom, x_bom - pixel); //draw spread on bomb coordinates, x - 16
+    ImageReturnCode explode = reader.drawBMP(SPREAD_LEFT, tft, y_bom_P1, x_bom_P1 - pixel); //draw spread on bomb coordinates, x - 16
   }
 }
 
-void damage_player()
+void explode_bomb_P2()
 {
-  if ((x_bom == x_waarde_P1 || x_bom == x_waarde_P1 + pixel || x_bom == x_waarde_P1 - pixel) && y_bom == y_waarde_P1 && damage_done == 0)
+  grid[(208 - y_bom_P2) / pixel][(x_bom_P2 - 80) / pixel] = 0; //remove bomb from the map
+
+  if (grid[((208 - y_bom_P2) / pixel)][(x_bom_P2 - 80) / pixel] != 1)//spread bomb middle
+  {
+    ImageReturnCode explode = reader.drawBMP(SPREAD_MID, tft, y_bom_P2, x_bom_P2); //draw spread on bomb coordinates
+  }
+  if (grid[((208 - y_bom_P2) / pixel) - 1][(x_bom_P2 - 80) / pixel] != 1)//spread up
+  {
+    ImageReturnCode explode = reader.drawBMP(SPREAD_UP, tft, y_bom_P2 + pixel, x_bom_P2); //draw spread on bomb coordinates, y + 16
+  }
+  if (grid[((208 - y_bom_P2) / pixel) + 1][(x_bom_P2 - 80) / pixel] != 1)//spread down
+  {
+    ImageReturnCode explode = reader.drawBMP(SPREAD_DOWN, tft, y_bom_P2 - pixel, x_bom_P2); //draw spread on bomb coordinates, y - 16
+  }
+  if (grid[((208 - y_bom_P2) / pixel)][((x_bom_P2 - 80) / pixel) + 1] != 1)//spread right
+  {
+    ImageReturnCode explode = reader.drawBMP(SPREAD_RIGHT, tft, y_bom_P2, x_bom_P2 + pixel); //draw spread on bomb coordinates, x + 16
+  }
+  if (grid[((208 - y_bom_P2) / pixel)][((x_bom_P2 - 80) / pixel) - 1] != 1)//spread left
+  {
+    ImageReturnCode explode = reader.drawBMP(SPREAD_LEFT, tft, y_bom_P2, x_bom_P2 - pixel); //draw spread on bomb coordinates, x - 16
+  }
+}
+
+void damage_player_P1()
+{
+  if ((x_bom_P1 == x_waarde_P1 || x_bom_P1 == x_waarde_P1 + pixel || x_bom_P1 == x_waarde_P1 - pixel) && y_bom_P1 == y_waarde_P1 && damage_done_P1 == 0)
   { //checks if PLAYER1  walks through bomb spread
-    life_player--;
-    damage_done = 1; //makes sure the bomb doesn't do damage twice
+    life_P1--;
+    damage_done_P1 = 1; //makes sure the bomb doesn't do damage twice
   }
-  if (( y_bom == y_waarde_P1 + pixel || y_bom == y_waarde_P1 - pixel) && x_bom == x_waarde_P1 && damage_done == 0)
+  if (( y_bom_P1 == y_waarde_P1 + pixel || y_bom_P1 == y_waarde_P1 - pixel) && x_bom_P1 == x_waarde_P1 && damage_done_P1 == 0)
   {
-    life_player--;
-    damage_done = 1; //makes sure the bomb doesn't do damage twice
+    life_P1--;
+    damage_done_P1 = 1; //makes sure the bomb doesn't do damage twice
   }
 
-  if (life_player == 0)
+  if (life_P1 == 0)
   {
-    remove_block(); //removes bomb spread
+    remove_block_P1(); //removes bomb spread
     game_over = 1; //stops the game in the while loop
     ImageReturnCode stat2 = reader.drawBMP(EINDSCHERM, tft, 0, 0); //end-screen
   }
 }
 
-void remove_block()
+void damage_player_P2()
 {
-  if (grid[((208 - y_bom) / pixel)][(x_bom - 80) / pixel] != 1) //spread bomb middle
-  {
-    grid[((208 - y_bom) / pixel)][(x_bom - 80) / pixel] = 0; //removes chest if it's placed underneath bomb spread
-    ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_bom, x_bom); //draws ground block on the removed chest
-
-    damage_done = 0; //makes sure the next bomb will do damage
+  if ((x_bom_P2 == x_waarde_P2 || x_bom_P2 == x_waarde_P2 + pixel || x_bom_P2 == x_waarde_P2 - pixel) && y_bom_P2 == y_waarde_P2 && damage_done_P2 == 0)
+  { //checks if PLAYER2  walks through bomb spread
+    life_P2--;
+    damage_done_P2 = 1; //makes sure the bomb doesn't do damage twice
   }
-  if (grid[((208 - y_bom) / pixel) - 1][(x_bom - 80) / pixel] != 1)//spread up
+  if (( y_bom_P2 == y_waarde_P2 + pixel || y_bom_P2 == y_waarde_P2 - pixel) && x_bom_P2 == x_waarde_P2 && damage_done_P2 == 0)
   {
-    grid[((208 - y_bom) / pixel) - 1][(x_bom - 80) / pixel] = 0; //removes chest if it's placed underneath bomb spread
-    ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_bom + pixel, x_bom); //draws ground block on the removed chest
-
-    damage_done = 0; //makes sure the next bomb will do damage
+    life_P2--;
+    damage_done_P2 = 1; //makes sure the bomb doesn't do damage twice
   }
-  if (grid[((208 - y_bom) / pixel) + 1][(x_bom - 80) / pixel] != 1)//spread down
-  {
-    grid[((208 - y_bom) / pixel) + 1][(x_bom - 80) / pixel] = 0; //removes chest if it's placed underneath bomb spread
-    ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_bom - pixel, x_bom); //draws ground block on the removed chest
 
-    damage_done = 0; //makes sure the next bomb will do damage
+  if (life_P2 == 0)
+  {
+    remove_block_P2(); //removes bomb spread
+    game_over = 1; //stops the game in the while loop
+    ImageReturnCode stat2 = reader.drawBMP(EINDSCHERM, tft, 0, 0); //end-screen
   }
-  if (grid[((208 - y_bom) / pixel)][((x_bom - 80) / pixel) + 1] != 1)//spread right
-  {
-    grid[((208 - y_bom) / pixel)][((x_bom - 80) / pixel) + 1] = 0; //removes chest if it's placed underneath bomb spread
-    ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_bom, x_bom + pixel); //draws ground block on the removed chest
+}
 
-    damage_done = 0; //makes sure the next bomb will do damage
+
+void remove_block_P1()
+{
+  if (grid[((208 - y_bom_P1) / pixel)][(x_bom_P1 - 80) / pixel] != 1) //spread bomb middle
+  {
+    grid[((208 - y_bom_P1) / pixel)][(x_bom_P1 - 80) / pixel] = 0; //removes chest if it's placed underneath bomb spread
+    ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_bom_P1, x_bom_P1); //draws ground block on the removed chest
+
+    damage_done_P1 = 0; //makes sure the next bomb will do damage
   }
-  if (grid[((208 - y_bom) / pixel)][((x_bom - 80) / pixel) - 1] != 1)//spread left
+  if (grid[((208 - y_bom_P1) / pixel) - 1][(x_bom_P1 - 80) / pixel] != 1)//spread up
   {
-    grid[((208 - y_bom) / pixel)][((x_bom - 80) / pixel) - 1] = 0; //removes chest if it's placed underneath bomb spread
-    ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_bom, x_bom - pixel); //draws ground block on the removed chest
+    grid[((208 - y_bom_P1) / pixel) - 1][(x_bom_P1 - 80) / pixel] = 0; //removes chest if it's placed underneath bomb spread
+    ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_bom_P1 + pixel, x_bom_P1); //draws ground block on the removed chest
 
-    damage_done = 0; //makes sure the next bomb will do damage
+    damage_done_P1 = 0; //makes sure the next bomb will do damage
+  }
+  if (grid[((208 - y_bom_P1) / pixel) + 1][(x_bom_P1 - 80) / pixel] != 1)//spread down
+  {
+    grid[((208 - y_bom_P1) / pixel) + 1][(x_bom_P1 - 80) / pixel] = 0; //removes chest if it's placed underneath bomb spread
+    ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_bom_P1 - pixel, x_bom_P1); //draws ground block on the removed chest
+
+    damage_done_P1 = 0; //makes sure the next bomb will do damage
+  }
+  if (grid[((208 - y_bom_P1) / pixel)][((x_bom_P1 - 80) / pixel) + 1] != 1)//spread right
+  {
+    grid[((208 - y_bom_P1) / pixel)][((x_bom_P1 - 80) / pixel) + 1] = 0; //removes chest if it's placed underneath bomb spread
+    ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_bom_P1, x_bom_P1 + pixel); //draws ground block on the removed chest
+
+    damage_done_P1 = 0; //makes sure the next bomb will do damage
+  }
+  if (grid[((208 - y_bom_P1) / pixel)][((x_bom_P1 - 80) / pixel) - 1] != 1)//spread left
+  {
+    grid[((208 - y_bom_P1) / pixel)][((x_bom_P1 - 80) / pixel) - 1] = 0; //removes chest if it's placed underneath bomb spread
+    ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_bom_P1, x_bom_P1 - pixel); //draws ground block on the removed chest
+
+    damage_done_P1 = 0; //makes sure the next bomb will do damage
+  }
+}
+
+void remove_block_P2()
+{
+  if (grid[((208 - y_bom_P2) / pixel)][(x_bom_P2 - 80) / pixel] != 1) //spread bomb middle
+  {
+    grid[((208 - y_bom_P2) / pixel)][(x_bom_P2 - 80) / pixel] = 0; //removes chest if it's placed underneath bomb spread
+    ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_bom_P2, x_bom_P2); //draws ground block on the removed chest
+
+    damage_done_P1 = 0; //makes sure the next bomb will do damage
+  }
+  if (grid[((208 - y_bom_P2) / pixel) - 1][(x_bom_P2 - 80) / pixel] != 1)//spread up
+  {
+    grid[((208 - y_bom_P2) / pixel) - 1][(x_bom_P2 - 80) / pixel] = 0; //removes chest if it's placed underneath bomb spread
+    ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_bom_P2 + pixel, x_bom_P2); //draws ground block on the removed chest
+
+    damage_done_P2 = 0; //makes sure the next bomb will do damage
+  }
+  if (grid[((208 - y_bom_P2) / pixel) + 1][(x_bom_P2 - 80) / pixel] != 1)//spread down
+  {
+    grid[((208 - y_bom_P2) / pixel) + 1][(x_bom_P2 - 80) / pixel] = 0; //removes chest if it's placed underneath bomb spread
+    ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_bom_P2 - pixel, x_bom_P2); //draws ground block on the removed chest
+
+    damage_done_P2 = 0; //makes sure the next bomb will do damage
+  }
+  if (grid[((208 - y_bom_P2) / pixel)][((x_bom_P2 - 80) / pixel) + 1] != 1)//spread right
+  {
+    grid[((208 - y_bom_P2) / pixel)][((x_bom_P2 - 80) / pixel) + 1] = 0; //removes chest if it's placed underneath bomb spread
+    ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_bom_P2, x_bom_P2 + pixel); //draws ground block on the removed chest
+
+    damage_done_P2 = 0; //makes sure the next bomb will do damage
+  }
+  if (grid[((208 - y_bom_P2) / pixel)][((x_bom_P2 - 80) / pixel) - 1] != 1)//spread left
+  {
+    grid[((208 - y_bom_P2) / pixel)][((x_bom_P2 - 80) / pixel) - 1] = 0; //removes chest if it's placed underneath bomb spread
+    ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_bom_P2, x_bom_P2 - pixel); //draws ground block on the removed chest
+
+    damage_done_P2 = 0; //makes sure the next bomb will do damage
   }
 }
 
@@ -444,6 +785,8 @@ void move_P1()
     if (!grid[((208 - y_waarde_P1) / pixel) - 1][(x_waarde_P1 - 80) / pixel]) //player can't move over borders, walls, bombs or chests
     {
       go_up_P1();
+
+      bytje = 0b00000001;
     }
     boven_P1 = 0;
   }
@@ -453,6 +796,8 @@ void move_P1()
     if (!grid[((208 - y_waarde_P1) / pixel)][((x_waarde_P1 - 80) / pixel) + 1]) //player can't move over borders, walls, bombs or chests
     {
       go_right_P1();
+
+      bytje = 0b00001111;
     }
     rechts_P1 = 0;
   }
@@ -462,6 +807,8 @@ void move_P1()
     if (!grid[((208 - y_waarde_P1) / pixel)][((x_waarde_P1 - 80) / pixel) - 1]) //player can't move over borders, walls, bombs or chests
     {
       go_left_P1();
+
+      bytje = 0b00011111;
     }
     links_P1 = 0;
   }
@@ -471,87 +818,97 @@ void move_P1()
     if (!grid[((208 - y_waarde_P1) / pixel) + 1][(x_waarde_P1 - 80) / pixel]) //player can't move over borders, walls, bombs or chests
     {
       go_down_P1();
+
+      bytje = 0b00000011;
     }
     onder_P1 = 0;
   }
 
   if (nunchuk_buttonC()) //checks if button C is pressed
   {
-    if (bomb_set == 0 && spread_set == 0) //makes sure a player can only place one bomb at a time
+    if (bomb_set_P1 == 0 && spread_set_P1 == 0) //makes sure a player can only place one bomb at a time
     {
       if (first) //doesn't place a bomb at the start of the game
       {
-        place_bomb();
-        ground_once = 1; //flag to reset the ground once after a bomb exploded
+        place_bomb_P1();
+        ground_once_P1 = 1; //flag to reset the ground once after a bomb exploded
       }
     }
     first = 1;
   }
 
-  if (bomb_set == 0 && ground_once == 1)
+  if (bomb_set_P1 == 0 && ground_once_P1 == 1)
   {
     bomb_counter_P1 = 0;
-    ImageReturnCode remove_bomb = reader.drawBMP(GROUND, tft, y_bom, x_bom); //removes the bomb by replacing it with a ground block
-    ground_once = 0;
+    ImageReturnCode remove_bomb = reader.drawBMP(GROUND, tft, y_bom_P1, x_bom_P1); //removes the bomb by replacing it with a ground block
+    ground_once_P1 = 0;
   }
 
-  if (explode) //is set when bomb_counter reaches 10
+  if (explode_P1) //is set when bomb_counter reaches 10
   {
-    explode_bomb(); //explodes the bomb after 1.5 seconds
-    explode = 0;
+    explode_bomb_P1(); //explodes the bomb after 1.5 seconds
+    explode_P1 = 0;
   }
 
-  if (boom) //is set when spread_counter reaches 8
+  if (boom_P1) //is set when spread_counter reaches 8
   {
-    remove_block(); //removes the spread from the map
-    boom = 0;
-    spread_set = 0;
+    remove_block_P1(); //removes the spread from the map
+    boom_P1 = 0;
+    spread_set_P1 = 0;
   }
 }
 
 void move_P2()
 {
   //check_buttonZ();
-  
-  if (up > 3)
+
+  if (boven > 3)
   {
     if (!grid[((208 - y_waarde_P2) / pixel) - 1][(x_waarde_P2 - 80) / pixel]) //player can't move over borders, walls, bombs or chests
     {
-      Serial.println("UP");
+      //Serial.println("UP");
       go_up_P2();
     }
-    up = 0;
+    boven = 0;
   }
-  if (down > 3)
+  if (onder > 3)
   {
     if (!grid[((208 - y_waarde_P2) / pixel) + 1][(x_waarde_P2 - 80) / pixel]) //player can't move over borders, walls, bombs or chests
     {
-      Serial.println("DOWN");
+      //Serial.println("DOWN");
       go_down_P2();
     }
-    down = 0;
+    onder = 0;
   }
-  if (left > 3)
+  if (links > 3)
   {
     if (!grid[((208 - y_waarde_P2) / pixel)][((x_waarde_P2 - 80) / pixel) - 1]) //player can't move over borders, walls, bombs or chests
     {
-      Serial.println("LEFT");
+      //Serial.println("LEFT");
       go_left_P2();
     }
-    left = 0;
+    links = 0;
   }
-  if (right > 3)
+  if (rechts > 3)
   {
     if (!grid[((208 - y_waarde_P2) / pixel)][((x_waarde_P2 - 80) / pixel) + 1]) //player can't move over borders, walls, bombs or chests
     {
-      Serial.println("RIGHT");
+      //Serial.println("RIGHT");
       go_right_P2();
     }
-    right = 0;
+    rechts = 0;
   }
   if (buttonc > 3)
   {
-    Serial.println("BUTTONC");
+    //Serial.println("BUTTONC");
     buttonc = 0;
+  }
+}
+
+void check_buttonZ()
+{
+  if (nunchuk_buttonC())
+  {
+    bytje = 0b00000000;
   }
 }
