@@ -12,7 +12,6 @@ int bit_positie = 7;
 int falling_edge = 1;
 
 int data_correct = 0;
-int data_byte[9];
 
 int middle, up, down, left, right, buttonc;
 
