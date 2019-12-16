@@ -43,14 +43,16 @@ uint16_t x_waarde_P2 = 256;
 uint8_t first = 0;
 
 //controls movement in  (Dutch because of compilation errors)
-uint8_t boven;
-uint8_t rechts;
-uint8_t links;
-uint8_t onder;
+uint8_t boven_P1;
+uint8_t rechts_P1;
+uint8_t links_P1;
+uint8_t onder_P1;
 
-//array layout
-const uint8_t rows = 13;
-const uint8_t columns = 13;
+uint8_t boven_P2;
+uint8_t rechts_P2;
+uint8_t links_P2;
+uint8_t onder_P2;
+
 
 /*
    Grid map:
@@ -59,7 +61,7 @@ const uint8_t columns = 13;
    2 = chests (collisiable after explosion)
    3 = bomb
 */
-uint8_t grid[rows][columns]
+uint8_t grid[13][13]
 {
   {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
   {1, 0, 0, 2, 2, 2, 2, 2, 2, 2, 0, 0, 1},
@@ -77,12 +79,14 @@ uint8_t grid[rows][columns]
 };
 
 //bomb controls
-uint8_t bomb_counter = 0;
+uint8_t bomb_counter_P1 = 0;
 uint8_t bomb_set;
 uint8_t explode = 0;
 uint8_t ground_once;
 uint8_t refresh_once_P1;
 
+
+uint8_t bomb_counter_P2 = 0;
 uint8_t refresh_once_P2;
 
 //location bomb
@@ -117,10 +121,10 @@ void map_setup();
 
 //control functions prototypes
 void move_P1();
-void go_up();
-void go_right();
-void go_left();
-void go_down();
+void go_up_P1();
+void go_right_P1();
+void go_left_P1();
+void go_down_P1();
 void place_bomb();
 void explode_bomb();
 void remove_block();
@@ -128,32 +132,45 @@ void damage_player();
 void draw_P1();
 void draw_P2();
 
+void move_P2();
+void go_up_P2();
+void go_right_P2();
+void go_left_P2();
+void go_down_P2();
+
 
 ISR(TIMER1_COMPA_vect)
 {
   if (nunchuk_joystickY_raw() > 200) //up
   {
-    boven = 1;
+    boven_P1 = 1;
   }
   if (nunchuk_joystickX_raw() > 200) //right
   {
-    rechts = 1;
+    rechts_P1 = 1;
   }
   if (nunchuk_joystickX_raw() < 50) //left
   {
-    links = 1;
+    links_P1 = 1;
   }
   if (nunchuk_joystickY_raw() < 50) //down
   {
-    onder = 1;
+    onder_P1 = 1;
   }
 
   if (bomb_set) //is placed when bom is placed
   {
-    bomb_counter++; //leaves the bomb for a while
+    bomb_counter_P1++; //leaves the bomb for a while
   }
 
-  if (bomb_counter >= 10)
+  if (bomb_counter_P1 >= 10)
+  {
+    explode = 1;
+    bomb_set = 0; //bomb removes
+    spread_set = 1;
+  }
+
+    if (bomb_counter_P2 >= 10)
   {
     explode = 1;
     bomb_set = 0; //bomb removes
@@ -186,6 +203,9 @@ int main(void)
     if (nunchuk_read() && game_over == 0)
     {
       move_P1(); //move functions for PLAYER1
+      move_P2(); //move functions for PLAYER2
+
+      ImageReturnCode set = reader.drawBMP(SHADOW , tft, 208, 96);
     }
   }
 }
@@ -237,32 +257,60 @@ void map_setup()
   }
 }
 
-void go_up()
+void go_up_P1()
 {
   y_waarde_P1 = y_waarde_P1 + pixel;
 
   draw_P1();
 }
 
-void go_right()
+void go_right_P1()
 {
   x_waarde_P1 = x_waarde_P1 + pixel;
 
   draw_P1();
 }
 
-void go_left()
+void go_left_P1()
 {
   x_waarde_P1 = x_waarde_P1 - pixel;
 
   draw_P1();
 }
 
-void go_down()
+void go_down_P1()
 {
   y_waarde_P1 = y_waarde_P1 - pixel;
 
   draw_P1();
+}
+
+void go_up_P2()
+{
+  y_waarde_P2 = y_waarde_P2 + pixel;
+
+  draw_P2();
+}
+
+void go_right_P2()
+{
+  x_waarde_P2 = x_waarde_P2 + pixel;
+
+  draw_P2();
+}
+
+void go_left_P2()
+{
+  x_waarde_P2 = x_waarde_P2 - pixel;
+
+  draw_P2();
+}
+
+void go_down_P2()
+{
+  y_waarde_P2 = y_waarde_P2 - pixel;
+
+  draw_P2();
 }
 
 void draw_P1()
@@ -332,7 +380,7 @@ void explode_bomb()
 void damage_player()
 {
   if ((x_bom == x_waarde_P1 || x_bom == x_waarde_P1 + pixel || x_bom == x_waarde_P1 - pixel) && y_bom == y_waarde_P1 && damage_done == 0)
-  { //checks if PLAYER1  walks through bomb spread 
+  { //checks if PLAYER1  walks through bomb spread
     life_player--;
     damage_done = 1; //makes sure the bomb doesn't do damage twice
   }
@@ -391,40 +439,40 @@ void remove_block()
 
 void move_P1()
 {
-  if (boven) //checks if the nunchuk moves up (in ISR)
+  if (boven_P1) //checks if the nunchuk moves up (in ISR)
   {
     if (!grid[((208 - y_waarde_P1) / pixel) - 1][(x_waarde_P1 - 80) / pixel]) //player can't move over borders, walls, bombs or chests
     {
-      go_up();
+      go_up_P1();
     }
-    boven = 0;
+    boven_P1 = 0;
   }
 
-  if (rechts) //checks if the nunchuk moves right (in ISR)
+  if (rechts_P1) //checks if the nunchuk moves right (in ISR)
   {
     if (!grid[((208 - y_waarde_P1) / pixel)][((x_waarde_P1 - 80) / pixel) + 1]) //player can't move over borders, walls, bombs or chests
     {
-      go_right();
+      go_right_P1();
     }
-    rechts = 0;
+    rechts_P1 = 0;
   }
 
-  if (links) //checks if the nunchuk moves left (in ISR)
+  if (links_P1) //checks if the nunchuk moves left (in ISR)
   {
     if (!grid[((208 - y_waarde_P1) / pixel)][((x_waarde_P1 - 80) / pixel) - 1]) //player can't move over borders, walls, bombs or chests
     {
-      go_left();
+      go_left_P1();
     }
-    links = 0;
+    links_P1 = 0;
   }
 
-  if (onder) //checks if the nunchuk moves down (in ISR)
+  if (onder_P1) //checks if the nunchuk moves down (in ISR)
   {
     if (!grid[((208 - y_waarde_P1) / pixel) + 1][(x_waarde_P1 - 80) / pixel]) //player can't move over borders, walls, bombs or chests
     {
-      go_down();
+      go_down_P1();
     }
-    onder = 0;
+    onder_P1 = 0;
   }
 
   if (nunchuk_buttonC()) //checks if button C is pressed
@@ -440,14 +488,14 @@ void move_P1()
     first = 1;
   }
 
-  if (bomb_set == 0 && ground_once == 1) 
+  if (bomb_set == 0 && ground_once == 1)
   {
-    bomb_counter = 0;
+    bomb_counter_P1 = 0;
     ImageReturnCode remove_bomb = reader.drawBMP(GROUND, tft, y_bom, x_bom); //removes the bomb by replacing it with a ground block
     ground_once = 0;
   }
 
-  if (explode) //is set when bomb_counter reaches 10 
+  if (explode) //is set when bomb_counter reaches 10
   {
     explode_bomb(); //explodes the bomb after 1.5 seconds
     explode = 0;
@@ -459,6 +507,51 @@ void move_P1()
     boom = 0;
     spread_set = 0;
   }
+}
 
-  ImageReturnCode set = reader.drawBMP(SHADOW , tft, 208, 96);
+void move_P2()
+{
+  //check_buttonZ();
+  
+  if (up > 3)
+  {
+    if (!grid[((208 - y_waarde_P2) / pixel) - 1][(x_waarde_P2 - 80) / pixel]) //player can't move over borders, walls, bombs or chests
+    {
+      Serial.println("UP");
+      go_up_P2();
+    }
+    up = 0;
+  }
+  if (down > 3)
+  {
+    if (!grid[((208 - y_waarde_P2) / pixel) + 1][(x_waarde_P2 - 80) / pixel]) //player can't move over borders, walls, bombs or chests
+    {
+      Serial.println("DOWN");
+      go_down_P2();
+    }
+    down = 0;
+  }
+  if (left > 3)
+  {
+    if (!grid[((208 - y_waarde_P2) / pixel)][((x_waarde_P2 - 80) / pixel) - 1]) //player can't move over borders, walls, bombs or chests
+    {
+      Serial.println("LEFT");
+      go_left_P2();
+    }
+    left = 0;
+  }
+  if (right > 3)
+  {
+    if (!grid[((208 - y_waarde_P2) / pixel)][((x_waarde_P2 - 80) / pixel) + 1]) //player can't move over borders, walls, bombs or chests
+    {
+      Serial.println("RIGHT");
+      go_right_P2();
+    }
+    right = 0;
+  }
+  if (buttonc > 3)
+  {
+    Serial.println("BUTTONC");
+    buttonc = 0;
+  }
 }
