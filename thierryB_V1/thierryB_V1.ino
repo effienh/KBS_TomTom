@@ -223,14 +223,14 @@ ISR(TIMER0_COMPA_vect)
     spread_counter_P1++; //leaves the spread for a while
     damage_player_P1();
   }
-  
+
   if (spread_counter_P1 >= 1200)
   {
     boom_P1 = 1;
     spread_counter_P1 = 0;
   }
 
-    if (bomb_set_P2) //is placed when bom is placed
+  if (bomb_set_P2) //is placed when bom is placed
   {
     bomb_counter_P2++; //leaves the bomb for a while
   }
@@ -247,7 +247,7 @@ ISR(TIMER0_COMPA_vect)
     spread_counter_P2++; //leaves the spread for a while
     damage_player_P2();
   }
-  
+
   if (spread_counter_P2 >= 1200)
   {
     boom_P2 = 1;
@@ -389,11 +389,11 @@ int main(void)
   timer2_setup();
   PCINT1_setup();
   sei();
-  
+
   while (1)
   {
     if (nunchuk_read() && game_over == 0)
-    { 
+    {
       move_P1(); //move functions for PLAYER1
       move_P2(); //move functions for PLAYER2
 
@@ -506,6 +506,14 @@ void go_up_P1()
   y_waarde_P1 = y_waarde_P1 + pixel;
 
   draw_P1();
+
+  if (refresh_once_P1 == 0) //is set after a bomb is placed, makes sure the bomb won't be ereased
+  {
+    ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_waarde_P1 - pixel, x_waarde_P1); //makes sure PLAYER1 won't be printed twice
+  } else
+  {
+    refresh_once_P1 = 0;
+  }
 }
 
 void go_right_P1()
@@ -513,6 +521,14 @@ void go_right_P1()
   x_waarde_P1 = x_waarde_P1 + pixel;
 
   draw_P1();
+
+  if (refresh_once_P1 == 0) //is set after a bomb is placed, makes sure the bomb won't be ereased
+  {
+    ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_waarde_P1, x_waarde_P1  - pixel); //makes sure PLAYER1 won't be printed twice
+  } else
+  {
+    refresh_once_P1 = 0;
+  }
 }
 
 void go_left_P1()
@@ -520,6 +536,14 @@ void go_left_P1()
   x_waarde_P1 = x_waarde_P1 - pixel;
 
   draw_P1();
+
+  if (refresh_once_P1 == 0) //is set after a bomb is placed, makes sure the bomb won't be ereased
+  {
+    ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_waarde_P1, x_waarde_P1  + pixel); //makes sure PLAYER1 won't be printed twice
+  } else
+  {
+    refresh_once_P1 = 0;
+  }
 }
 
 void go_down_P1()
@@ -527,39 +551,6 @@ void go_down_P1()
   y_waarde_P1 = y_waarde_P1 - pixel;
 
   draw_P1();
-}
-
-void go_up_P2()
-{
-  y_waarde_P2 = y_waarde_P2 + pixel;
-
-  draw_P2();
-}
-
-void go_right_P2()
-{
-  x_waarde_P2 = x_waarde_P2 + pixel;
-
-  draw_P2();
-}
-
-void go_left_P2()
-{
-  x_waarde_P2 = x_waarde_P2 - pixel;
-
-  draw_P2();
-}
-
-void go_down_P2()
-{
-  y_waarde_P2 = y_waarde_P2 - pixel;
-
-  draw_P2();
-}
-
-void draw_P1()
-{
-  ImageReturnCode char_refresh = reader.drawBMP(PLAYER1, tft, y_waarde_P1, x_waarde_P1); //draws PLAYER1 on y and x coordinates
 
   if (refresh_once_P1 == 0) //is set after a bomb is placed, makes sure the bomb won't be ereased
   {
@@ -568,21 +559,76 @@ void draw_P1()
   {
     refresh_once_P1 = 0;
   }
+}
 
+void go_up_P2()
+{
+  y_waarde_P2 = y_waarde_P2 + pixel;
+
+  draw_P2();
+
+  if (refresh_once_P2 == 0) //is set after a bomb is placed, makes sure the bomb won't be ereased
+  {
+    ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_waarde_P2 - pixel, x_waarde_P2); //makes sure PLAYER1 won't be printed twice
+  } else
+  {
+    refresh_once_P2 = 0;
+  }
+}
+
+void go_right_P2()
+{
+  x_waarde_P2 = x_waarde_P2 + pixel;
+
+  draw_P2();
+  
+  if (refresh_once_P2 == 0) //is set after a bomb is placed, makes sure the bomb won't be ereased
+  {
+    ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_waarde_P2, x_waarde_P2 - pixel); //makes sure PLAYER1 won't be printed twice
+  } else
+  {
+    refresh_once_P2 = 0;
+  }
+}
+
+void go_left_P2()
+{
+  x_waarde_P2 = x_waarde_P2 - pixel;
+
+  draw_P2();
+
+  if (refresh_once_P2 == 0) //is set after a bomb is placed, makes sure the bomb won't be ereased
+  {
+    ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_waarde_P2, x_waarde_P2 + pixel); //makes sure PLAYER1 won't be printed twice
+  } else
+  {
+    refresh_once_P2 = 0;
+  }
+}
+
+void go_down_P2()
+{
+  y_waarde_P2 = y_waarde_P2 - pixel;
+
+  draw_P2();
+
+  if (refresh_once_P2 == 0) //is set after a bomb is placed, makes sure the bomb won't be ereased
+  {
+    ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_waarde_P2 + pixel, x_waarde_P2); //makes sure PLAYER1 won't be printed twice
+  } else
+  {
+    refresh_once_P2 = 0;
+  }
+}
+
+void draw_P1()
+{
+  ImageReturnCode char_refresh = reader.drawBMP(PLAYER1, tft, y_waarde_P1, x_waarde_P1); //draws PLAYER1 on y and x coordinates
 }
 
 void draw_P2()
 {
   ImageReturnCode char_refresh = reader.drawBMP(PLAYER2, tft, y_waarde_P2, x_waarde_P2); //draws PLAYER2 on y and x coordinates
-
-  if (refresh_once_P2 == 0) //is set after a bomb is placed, makes sure the bomb won't be ereased
-  {
-    ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_waarde_P2 + pixel, x_waarde_P2); //makes sure PLAYER2 won't be printed twice
-  } else
-  {
-    refresh_once_P2 = 0;
-  }
-
 }
 
 void place_bomb_P1()
@@ -783,7 +829,7 @@ void move_P1()
   if ((nunchuk_joystickY_raw() < 135 && nunchuk_joystickY_raw() > 120) && (nunchuk_joystickX_raw() < 135 && nunchuk_joystickX_raw() > 120))
   {
     bytje = 0b00011111;
-  }else if (boven_P1) //checks if the nunchuk moves up (in ISR)
+  } else if (boven_P1) //checks if the nunchuk moves up (in ISR)
   {
     if (!grid[((208 - y_waarde_P1) / pixel) - 1][(x_waarde_P1 - 80) / pixel]) //player can't move over borders, walls, bombs or chests
     {
@@ -830,7 +876,7 @@ void move_P1()
   if (nunchuk_buttonC()) //checks if button C is pressed
   {
     bytje = 0b00000000;
-    
+
     if (bomb_set_P1 == 0 && spread_set_P1 == 0) //makes sure a player can only place one bomb at a time
     {
       if (first) //doesn't place a bomb at the start of the game
@@ -867,11 +913,11 @@ void move_P1()
 void move_P2()
 {
 
-if (midden > 3)
-    {
-      //Serial.println("MIDDLE");
-      midden = 0;
-    }
+  if (midden > 3)
+  {
+    //Serial.println("MIDDLE");
+    midden = 0;
+  }
   if (boven > 3)
   {
     if (!grid[((208 - y_waarde_P2) / pixel) - 1][(x_waarde_P2 - 80) / pixel]) //player can't move over borders, walls, bombs or chests
