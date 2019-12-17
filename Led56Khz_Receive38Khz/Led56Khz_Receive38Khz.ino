@@ -112,10 +112,11 @@ ISR(INT1_vect)
     current_counter = counter;
     falling_edge = 1;
     difference_counters = current_counter - prev_counter;
+    //Serial.println(difference_counters);
     counter = 0;
   }
 
-  if (difference_counters >= 290 && difference_counters <= 390 && (count_interrupts % 2 == 0)) //is 1
+  if (difference_counters >= 280 && difference_counters <= 480 && (count_interrupts % 2 == 0)) //is 1
   {
     bit_positie--;
     count_interrupts = 0;
