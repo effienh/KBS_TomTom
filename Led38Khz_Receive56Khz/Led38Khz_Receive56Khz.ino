@@ -117,7 +117,7 @@ ISR(INT1_vect)
     //Serial.println(difference_counters);
   }
 
-  if (difference_counters >= 570 && difference_counters <= 670 && (count_interrupts % 2 == 0)) //is 1
+  if (difference_counters >= 500 && difference_counters <= 620 && (count_interrupts % 2 == 0)) //is 1
   {
     bit_positie--;
     count_interrupts = 0;
@@ -199,6 +199,7 @@ int main()
     if (buttonc > 3)
     {
       Serial.println("BUTTONC");
+     
       buttonc = 0;
     }
   }
