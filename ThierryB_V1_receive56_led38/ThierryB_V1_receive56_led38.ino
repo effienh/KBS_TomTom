@@ -398,10 +398,11 @@ int main(void)
     if (nunchuk_read() && game_over == 0)
     { 
       move_P1(); //move functions for PLAYER1
-      move_P2(); //move functions for PLAYER2
 
       ImageReturnCode set = reader.drawBMP(SHADOW , tft, 208, 96);
     }
+    
+    move_P2(); //move functions for PLAYER2
     check_buttonZ();
   }
 }
