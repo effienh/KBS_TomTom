@@ -403,7 +403,6 @@ int main(void)
     }
     
     move_P2(); //move functions for PLAYER2
-    check_buttonZ();
   }
 }
 
@@ -959,14 +958,7 @@ if (midden > 3)
   if (buttonc > 3)
   {
     //Serial.println("BUTTONC");
+    place_bomb_P2();
     buttonc = 0;
-  }
-}
-
-void check_buttonZ()
-{
-  if (nunchuk_buttonC())
-  {
-    bytje = 0b00000000;
   }
 }
