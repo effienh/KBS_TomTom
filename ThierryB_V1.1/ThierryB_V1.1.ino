@@ -40,7 +40,8 @@ uint16_t y_waarde_P2 = 32;
 uint16_t x_waarde_P2 = 256;
 
 //Makes sure the bomb won't explode at the start
-uint8_t first = 0;
+uint8_t first_P1 = 0;
+uint8_t first_P2 = 0;
 
 //controls movement in  (Dutch because of compilation errors)
 uint8_t boven_P1;
@@ -77,13 +78,13 @@ uint8_t grid[13][13]
 };
 
 //bomb controls
-uint8_t bomb_counter_P1 = 0;
+uint16_t bomb_counter_P1 = 0;
 uint8_t bomb_set_P1;
 uint8_t explode_P1 = 0;
 uint8_t ground_once_P1;
 uint8_t refresh_once_P1;
 
-uint8_t bomb_counter_P2 = 0;
+uint16_t bomb_counter_P2 = 0;
 uint8_t bomb_set_P2;
 uint8_t explode_P2 = 0;
 uint8_t ground_once_P2;
@@ -97,11 +98,11 @@ uint16_t y_bom_P2;
 uint16_t x_bom_P2;
 
 //bomb spread
-uint8_t spread_counter_P1;
+uint16_t spread_counter_P1;
 uint8_t spread_set_P1;
 uint8_t boom_P1;
 
-uint8_t spread_counter_P2;
+uint16_t spread_counter_P2;
 uint8_t spread_set_P2;
 uint8_t boom_P2;
 
@@ -181,7 +182,7 @@ ISR(TIMER0_COMPA_vect)
 {
   count_interrupt0++;
 
-  if (count_interrupt0 >= 200)
+  if (count_interrupt0 >= 240)
   {
     count_interrupt0 = 0;
     if (nunchuk_joystickY_raw() > 200) //up
@@ -220,7 +221,7 @@ ISR(TIMER0_COMPA_vect)
     damage_player_P1();
   }
 
-  if (spread_counter_P1 >= 1200)
+  if (spread_counter_P1 >= 1500)
   {
     boom_P1 = 1;
     spread_counter_P1 = 0;
@@ -244,7 +245,7 @@ ISR(TIMER0_COMPA_vect)
     damage_player_P2();
   }
 
-  if (spread_counter_P2 >= 1200)
+  if (spread_counter_P2 >= 1500)
   {
     boom_P2 = 1;
     spread_counter_P2 = 0;
@@ -330,10 +331,10 @@ ISR(INT1_vect)
     counter = 0;
     difference_counters = current_counter - prev_counter;
     counter = 0;
-    Serial.println(difference_counters);
+    //Serial.println(difference_counters);
   }
 
-  if (difference_counters >= 280 && difference_counters <= 480 && (count_interrupts % 2 == 0)) //is 1
+  if (difference_counters >= 380 && difference_counters <= 550 && (count_interrupts % 2 == 0)) //is 1
   {
     bit_positie--;
     count_interrupts = 0;
@@ -373,7 +374,7 @@ ISR(INT1_vect)
 int main(void)
 {
   init();
-  Serial.begin(9600);
+  //Serial.begin(9600);
   lcd_setup();
   map_setup();
   setupWire();
@@ -492,9 +493,7 @@ void map_setup()
       if (grid[row][column] == 2) //checks if a chest needs to be placed
 
       {
-        //ImageReturnCode chest = reader.drawBMP(KIST, tft, 208 - (row * pixel), 80 + column * pixel); //displayes chest on the LCD
-      
-        grid[row][column] = 0;
+        ImageReturnCode chest = reader.drawBMP(KIST, tft, 208 - (row * pixel), 80 + column * pixel); //displayes chest on the LCD
       }
     }
   }
@@ -805,6 +804,7 @@ void remove_block_P2()
     damage_done_P2 = 0; //makes sure the next bomb will do damage
   }
 }
+
 void move_P1()
 {
   if ((nunchuk_joystickY_raw() < 135 && nunchuk_joystickY_raw() > 120) && (nunchuk_joystickX_raw() < 135 && nunchuk_joystickX_raw() > 120))
@@ -854,14 +854,15 @@ void move_P1()
     bytje = 0b00000000;
     if (bomb_set_P1 == 0 && spread_set_P1 == 0) //makes sure a player can only place one bomb at a time
     {
-      if (first) //doesn't place a bomb at the start of the game
+      if (first_P1) //doesn't place a bomb at the start of the game
       {
         place_bomb_P1();
         ground_once_P1 = 1; //flag to reset the ground once after a bomb exploded
       }
     }
-    first = 1;
+    first_P1 = 1;
   }
+
   if (bomb_set_P1 == 0 && ground_once_P1 == 1)
   {
     bomb_counter_P1 = 0;
@@ -885,12 +886,12 @@ void move_P1()
 
 void move_P2()
 {
-  if (midden > 3)
+  if (midden > 2)
   {
     //Serial.println("MIDDLE");
     midden = 0;
   }
-  if (boven > 3)
+  if (boven > 2)
   {
     if (!grid[((208 - y_waarde_P2) / pixel) - 1][(x_waarde_P2 - 80) / pixel]) //player can't move over borders, walls, bombs or chests
     {
@@ -899,7 +900,7 @@ void move_P2()
     }
     boven = 0;
   }
-  if (onder > 3)
+  if (onder > 2)
   {
     if (!grid[((208 - y_waarde_P2) / pixel) + 1][(x_waarde_P2 - 80) / pixel]) //player can't move over borders, walls, bombs or chests
     {
@@ -908,7 +909,7 @@ void move_P2()
     }
     onder = 0;
   }
-  if (links > 3)
+  if (links > 2)
   {
     if (!grid[((208 - y_waarde_P2) / pixel)][((x_waarde_P2 - 80) / pixel) - 1]) //player can't move over borders, walls, bombs or chests
     {
@@ -917,7 +918,7 @@ void move_P2()
     }
     links = 0;
   }
-  if (rechts > 3)
+  if (rechts > 2)
   {
     if (!grid[((208 - y_waarde_P2) / pixel)][((x_waarde_P2 - 80) / pixel) + 1]) //player can't move over borders, walls, bombs or chests
     {
@@ -926,10 +927,41 @@ void move_P2()
     }
     rechts = 0;
   }
-  if (buttonc > 3)
+  if (buttonc > 2)
   {
     //Serial.println("BUTTONC");
     place_bomb_P2();
     buttonc = 0;
+
+    if (bomb_set_P2 == 0 && spread_set_P2 == 0) //makes sure a player can only place one bomb at a time
+    {
+      if (first_P2) //doesn't place a bomb at the start of the game
+      {
+        place_bomb_P2();
+        ground_once_P2 = 1; //flag to reset the ground once after a bomb exploded
+
+      }
+    }
+    first_P2 = 1;
+  }
+  
+  if (bomb_set_P2 == 0 && ground_once_P2 == 1)
+  {
+    bomb_counter_P2 = 0;
+    ImageReturnCode remove_bomb = reader.drawBMP(GROUND, tft, y_bom_P2, x_bom_P2); //removes the bomb by replacing it with a ground block
+    ground_once_P2 = 0;
+  }
+
+  if (explode_P2) //is set when bomb_counter reaches 10
+  {
+    explode_bomb_P2(); //explodes the bomb after 1.5 seconds
+    explode_P2 = 0;
+  }
+
+  if (boom_P2) //is set when spread_counter reaches 8
+  {
+    remove_block_P2(); //removes the spread from the map
+    boom_P2 = 0;
+    spread_set_P2 = 0;
   }
 }
