@@ -355,19 +355,19 @@ ISR(INT1_vect)
     bit_positie = 7;
     if (data_correct == 5)
     {
-      middle++;
+      midden++;
     } else if (data_correct == 1)
     {
-      up++;
+      boven++;
     } else if (data_correct == 2)
     {
-      down++;
+      onder++;
     } else if (data_correct == 3)
     {
-      left++;
+      links++;
     } else if (data_correct == 4)
     {
-      right++;
+      rechts++;
     } else if (data_correct == 0)
     {
       buttonc++;
@@ -508,8 +508,15 @@ void map_setup()
 void go_up_P1()
 {
   y_waarde_P1 = y_waarde_P1 + pixel;
-
   draw_P1();
+
+  if (refresh_once_P1 == 0) //is set after a bomb is placed, makes sure the bomb won't be ereased
+  {
+    ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_waarde_P1 - pixel, x_waarde_P1); //makes sure PLAYER1 won't be printed twice
+  } else
+  {
+    refresh_once_P1 = 0;
+  }
 }
 
 void go_right_P1()
@@ -517,6 +524,14 @@ void go_right_P1()
   x_waarde_P1 = x_waarde_P1 + pixel;
 
   draw_P1();
+
+  if (refresh_once_P1 == 0) //is set after a bomb is placed, makes sure the bomb won't be ereased
+  {
+    ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_waarde_P1, x_waarde_P1  - pixel); //makes sure PLAYER1 won't be printed twice
+  } else
+  {
+    refresh_once_P1 = 0;
+  }
 }
 
 void go_left_P1()
@@ -524,46 +539,20 @@ void go_left_P1()
   x_waarde_P1 = x_waarde_P1 - pixel;
 
   draw_P1();
+
+  if (refresh_once_P1 == 0) //is set after a bomb is placed, makes sure the bomb won't be ereased
+  {
+    ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_waarde_P1, x_waarde_P1  + pixel); //makes sure PLAYER1 won't be printed twice
+  } else
+  {
+    refresh_once_P1 = 0;
+  }
 }
 
 void go_down_P1()
 {
   y_waarde_P1 = y_waarde_P1 - pixel;
-
   draw_P1();
-}
-
-void go_up_P2()
-{
-  y_waarde_P2 = y_waarde_P2 + pixel;
-
-  draw_P2();
-}
-
-void go_right_P2()
-{
-  x_waarde_P2 = x_waarde_P2 + pixel;
-
-  draw_P2();
-}
-
-void go_left_P2()
-{
-  x_waarde_P2 = x_waarde_P2 - pixel;
-
-  draw_P2();
-}
-
-void go_down_P2()
-{
-  y_waarde_P2 = y_waarde_P2 - pixel;
-
-  draw_P2();
-}
-
-void draw_P1()
-{
-  ImageReturnCode char_refresh = reader.drawBMP(PLAYER1, tft, y_waarde_P1, x_waarde_P1); //draws PLAYER1 on y and x coordinates
 
   if (refresh_once_P1 == 0) //is set after a bomb is placed, makes sure the bomb won't be ereased
   {
@@ -572,21 +561,76 @@ void draw_P1()
   {
     refresh_once_P1 = 0;
   }
+}
 
+void go_up_P2()
+
+{
+
+  y_waarde_P2 = y_waarde_P2 + pixel;
+
+
+
+  draw_P2();
+
+  if (refresh_once_P2 == 0) //is set after a bomb is placed, makes sure the bomb won't be ereased
+  {
+    ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_waarde_P2 - pixel, x_waarde_P2); //makes sure PLAYER1 won't be printed twice
+  } else
+  {
+    refresh_once_P2 = 0;
+  }
+}
+
+void go_right_P2()
+{
+  x_waarde_P2 = x_waarde_P2 + pixel;
+  draw_P2();
+  if (refresh_once_P2 == 0) //is set after a bomb is placed, makes sure the bomb won't be ereased
+  {
+    ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_waarde_P2, x_waarde_P2 - pixel); //makes sure PLAYER1 won't be printed twice
+  } else
+  {
+    refresh_once_P2 = 0;
+  }
+}
+
+void go_left_P2()
+{
+  x_waarde_P2 = x_waarde_P2 - pixel;
+  draw_P2();
+
+  if (refresh_once_P2 == 0) //is set after a bomb is placed, makes sure the bomb won't be ereased
+  {
+    ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_waarde_P2, x_waarde_P2 + pixel); //makes sure PLAYER1 won't be printed twice
+  } else
+  {
+    refresh_once_P2 = 0;
+  }
+}
+
+void go_down_P2()
+{
+  y_waarde_P2 = y_waarde_P2 - pixel;
+  draw_P2();
+
+  if (refresh_once_P2 == 0) //is set after a bomb is placed, makes sure the bomb won't be ereased
+  {
+    ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_waarde_P2 + pixel, x_waarde_P2); //makes sure PLAYER1 won't be printed twice
+  } else
+  {
+    refresh_once_P2 = 0;
+  }
+}
+
+void draw_P1()
+{
+  ImageReturnCode char_refresh = reader.drawBMP(PLAYER1, tft, y_waarde_P1, x_waarde_P1); //draws PLAYER1 on y and x coordinates
 }
 
 void draw_P2()
 {
   ImageReturnCode char_refresh = reader.drawBMP(PLAYER2, tft, y_waarde_P2, x_waarde_P2); //draws PLAYER2 on y and x coordinates
-
-  if (refresh_once_P2 == 0) //is set after a bomb is placed, makes sure the bomb won't be ereased
-  {
-    ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_waarde_P2 + pixel, x_waarde_P2); //makes sure PLAYER2 won't be printed twice
-  } else
-  {
-    refresh_once_P2 = 0;
-  }
-
 }
 
 void place_bomb_P1()
