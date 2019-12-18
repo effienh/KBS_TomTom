@@ -498,7 +498,9 @@ void map_setup()
     {
       if (grid[row][column] == 2) //checks if a chest needs to be placed
       {
-        ImageReturnCode chest = reader.drawBMP(KIST, tft, 208 - (row * pixel), 80 + column * pixel); //displayes chest on the LCD
+        //ImageReturnCode chest = reader.drawBMP(KIST, tft, 208 - (row * pixel), 80 + column * pixel); //displayes chest on the LCD
+      
+        grid[row][column] = 0;
       }
     }
   }
@@ -858,7 +860,7 @@ void move_P1()
     {
       go_left_P1();
 
-      bytje = 0b00011111;
+      bytje = 0b00000111;
     }
     links_P1 = 0;
   }
@@ -876,7 +878,7 @@ void move_P1()
 
   if (nunchuk_buttonC()) //checks if button C is pressed
   {
-    bytje = 0b00000000;
+    bytje = 0b11111111;
     
     if (bomb_set_P1 == 0 && spread_set_P1 == 0) //makes sure a player can only place one bomb at a time
     {

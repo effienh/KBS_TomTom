@@ -330,7 +330,7 @@ ISR(INT1_vect)
     counter = 0;
     difference_counters = current_counter - prev_counter;
     counter = 0;
-    //Serial.println(difference_counters);
+    Serial.println(difference_counters);
   }
 
   if (difference_counters >= 280 && difference_counters <= 480 && (count_interrupts % 2 == 0)) //is 1
@@ -338,7 +338,7 @@ ISR(INT1_vect)
     bit_positie--;
     count_interrupts = 0;
     data_correct++;
-  } else if (difference_counters <= 200 && difference_counters >= 100 && (count_interrupts % 2 == 0)) //is 0
+  } else if (difference_counters <= 300 && difference_counters >= 100 && (count_interrupts % 2 == 0)) //is 0
   {
     bit_positie--;
     count_interrupts = 0;
@@ -492,7 +492,9 @@ void map_setup()
       if (grid[row][column] == 2) //checks if a chest needs to be placed
 
       {
-        ImageReturnCode chest = reader.drawBMP(KIST, tft, 208 - (row * pixel), 80 + column * pixel); //displayes chest on the LCD
+        //ImageReturnCode chest = reader.drawBMP(KIST, tft, 208 - (row * pixel), 80 + column * pixel); //displayes chest on the LCD
+      
+        grid[row][column] = 0;
       }
     }
   }
@@ -833,7 +835,7 @@ void move_P1()
     if (!grid[((208 - y_waarde_P1) / pixel)][((x_waarde_P1 - 80) / pixel) - 1]) //player can't move over borders, walls, bombs or chests
     {
       go_left_P1();
-      bytje = 0b00011111;
+      bytje = 0b00000111;
     }
     links_P1 = 0;
   }
@@ -885,14 +887,14 @@ void move_P2()
 {
   if (midden > 3)
   {
-    Serial.println("MIDDLE");
+    //Serial.println("MIDDLE");
     midden = 0;
   }
   if (boven > 3)
   {
     if (!grid[((208 - y_waarde_P2) / pixel) - 1][(x_waarde_P2 - 80) / pixel]) //player can't move over borders, walls, bombs or chests
     {
-      Serial.println("UP");
+      //Serial.println("UP");
       go_up_P2();
     }
     boven = 0;
@@ -901,7 +903,7 @@ void move_P2()
   {
     if (!grid[((208 - y_waarde_P2) / pixel) + 1][(x_waarde_P2 - 80) / pixel]) //player can't move over borders, walls, bombs or chests
     {
-      Serial.println("DOWN");
+      //Serial.println("DOWN");
       go_down_P2();
     }
     onder = 0;
@@ -910,7 +912,7 @@ void move_P2()
   {
     if (!grid[((208 - y_waarde_P2) / pixel)][((x_waarde_P2 - 80) / pixel) - 1]) //player can't move over borders, walls, bombs or chests
     {
-      Serial.println("LEFT");
+      //Serial.println("LEFT");
       go_left_P2();
     }
     links = 0;
@@ -919,14 +921,14 @@ void move_P2()
   {
     if (!grid[((208 - y_waarde_P2) / pixel)][((x_waarde_P2 - 80) / pixel) + 1]) //player can't move over borders, walls, bombs or chests
     {
-      Serial.println("RIGHT");
+      //Serial.println("RIGHT");
       go_right_P2();
     }
     rechts = 0;
   }
   if (buttonc > 3)
   {
-    Serial.println("BUTTONC");
+    //Serial.println("BUTTONC");
     place_bomb_P2();
     buttonc = 0;
   }
