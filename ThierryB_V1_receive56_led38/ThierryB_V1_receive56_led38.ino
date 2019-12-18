@@ -340,12 +340,12 @@ ISR(INT1_vect)
     //Serial.println(difference_counters);
   }
 
-  if (difference_counters >= 500 && difference_counters <= 620 && (count_interrupts % 2 == 0)) //is 1
+  if (difference_counters >= 400 && difference_counters <= 500 && (count_interrupts % 2 == 0)) //is 1
   {
     bit_positie--;
     count_interrupts = 0;
     data_correct++;
-  } else if (difference_counters <= 250 && difference_counters >= 150 && (count_interrupts % 2 == 0)) //is 0
+  } else if (difference_counters <= 200 && difference_counters >= 100 && (count_interrupts % 2 == 0)) //is 0
   {
     bit_positie--;
     count_interrupts = 0;
