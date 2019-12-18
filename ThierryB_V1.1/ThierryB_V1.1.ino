@@ -396,7 +396,6 @@ int main(void)
 
       ImageReturnCode set = reader.drawBMP(SHADOW , tft, 208, 96);
     }
-    check_buttonZ();
   }
 }
 
@@ -560,13 +559,8 @@ void go_down_P1()
 }
 
 void go_up_P2()
-
 {
-
   y_waarde_P2 = y_waarde_P2 + pixel;
-
-
-
   draw_P2();
 
   if (refresh_once_P2 == 0) //is set after a bomb is placed, makes sure the bomb won't be ereased
@@ -933,14 +927,7 @@ void move_P2()
   if (buttonc > 3)
   {
     Serial.println("BUTTONC");
+    place_bomb_P2();
     buttonc = 0;
-  }
-}
-
-void check_buttonZ()
-{
-  if (nunchuk_buttonC())
-  {
-    bytje = 0b00000000;
   }
 }
