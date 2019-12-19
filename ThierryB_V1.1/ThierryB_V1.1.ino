@@ -107,7 +107,8 @@ uint8_t spread_set_P2;
 uint8_t boom_P2;
 
 //lifes
-uint8_t game_over = 0;
+uint8_t game_over_P1 = 0;
+uint8_t game_over_P2 = 0;
 uint8_t life_P1 = 2;
 uint8_t damage_done_P1 = 0;
 
@@ -129,6 +130,7 @@ void timer0_setup();
 void setupWire();
 void lcd_setup();
 void map_setup();
+void endscreen();
 
 //control functions prototypes
 void move_P1();
@@ -334,7 +336,7 @@ ISR(INT1_vect)
     //Serial.println(difference_counters);
   }
 
-  if (difference_counters >= 380 && difference_counters <= 550 && (count_interrupts % 2 == 0)) //is 1
+  if (difference_counters >= 380 && difference_counters <= 600 && (count_interrupts % 2 == 0)) //is 1
   {
     bit_positie--;
     count_interrupts = 0;
@@ -388,9 +390,13 @@ int main(void)
   PCINT1_setup();
   sei();
 
+  tft.setCursor(200, 180);
+  tft.setTextColor(0x000000);
+  tft.setTextSize(3);
+
   while (1)
   {
-    if (nunchuk_read() && game_over == 0)
+    if (nunchuk_read() && (game_over_P1 == 0 || game_over_P2 == 0))
     {
       move_P1(); //move functions for PLAYER1
       move_P2(); //move functions for PLAYER2
@@ -712,8 +718,9 @@ void damage_player_P1()
   if (life_P1 == 0)
   {
     remove_block_P1(); //removes bomb spread
-    game_over = 1; //stops the game in the while loop
-    ImageReturnCode stat2 = reader.drawBMP(EINDSCHERM, tft, 0, 0); //end-screen
+    game_over_P1 = 1; //stops the game in the while loop
+    //ImageReturnCode stat2 = reader.drawBMP(EINDSCHERM, tft, 0, 0); //end-screen
+    endscreen();
   }
 }
 
@@ -732,8 +739,25 @@ void damage_player_P2()
   if (life_P2 == 0)
   {
     remove_block_P2(); //removes bomb spread
-    game_over = 1; //stops the game in the while loop
+    game_over_P2 = 1; //stops the game in the while loop
+    //ImageReturnCode stat2 = reader.drawBMP(EINDSCHERM, tft, 0, 0); //end-screen
+    endscreen();
+  }
+}
+
+void endscreen()
+{
+  if (game_over_P1 || game_over_P2)
+  {
     ImageReturnCode stat2 = reader.drawBMP(EINDSCHERM, tft, 0, 0); //end-screen
+
+    if (game_over_P1)
+    {
+      tft.print("YOU LOSE");
+    } else if (game_over_P2)
+    {
+      tft.print("YOU WIN");
+    }
   }
 }
 
@@ -944,7 +968,7 @@ void move_P2()
     }
     first_P2 = 1;
   }
-  
+
   if (bomb_set_P2 == 0 && ground_once_P2 == 1)
   {
     bomb_counter_P2 = 0;
