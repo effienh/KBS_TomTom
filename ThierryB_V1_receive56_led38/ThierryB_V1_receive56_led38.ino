@@ -808,8 +808,6 @@ void remove_block_P1()
 {
   if (grid[((208 - y_bom_P1) / pixel)][(x_bom_P1 - 80) / pixel] != 1) //spread bomb middle
   {
-    game_over_P1 = 1;
-
     grid[((208 - y_bom_P1) / pixel)][(x_bom_P1 - 80) / pixel] = 0; //removes chest if it's placed underneath bomb spread
     ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_bom_P1, x_bom_P1); //draws ground block on the removed chest
 
@@ -817,8 +815,6 @@ void remove_block_P1()
   }
   if (grid[((208 - y_bom_P1) / pixel) - 1][(x_bom_P1 - 80) / pixel] != 1)//spread up
   {
-    game_over_P1 = 1;
-
     grid[((208 - y_bom_P1) / pixel) - 1][(x_bom_P1 - 80) / pixel] = 0; //removes chest if it's placed underneath bomb spread
     ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_bom_P1 + pixel, x_bom_P1); //draws ground block on the removed chest
 
@@ -826,8 +822,6 @@ void remove_block_P1()
   }
   if (grid[((208 - y_bom_P1) / pixel) + 1][(x_bom_P1 - 80) / pixel] != 1)//spread down
   {
-    game_over_P1 = 1;
-
     grid[((208 - y_bom_P1) / pixel) + 1][(x_bom_P1 - 80) / pixel] = 0; //removes chest if it's placed underneath bomb spread
     ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_bom_P1 - pixel, x_bom_P1); //draws ground block on the removed chest
 
@@ -835,8 +829,6 @@ void remove_block_P1()
   }
   if (grid[((208 - y_bom_P1) / pixel)][((x_bom_P1 - 80) / pixel) + 1] != 1)//spread right
   {
-    game_over_P1 = 1;
-
     grid[((208 - y_bom_P1) / pixel)][((x_bom_P1 - 80) / pixel) + 1] = 0; //removes chest if it's placed underneath bomb spread
     ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_bom_P1, x_bom_P1 + pixel); //draws ground block on the removed chest
 
@@ -844,8 +836,6 @@ void remove_block_P1()
   }
   if (grid[((208 - y_bom_P1) / pixel)][((x_bom_P1 - 80) / pixel) - 1] != 1)//spread left
   {
-    game_over_P1 = 1;
-
     grid[((208 - y_bom_P1) / pixel)][((x_bom_P1 - 80) / pixel) - 1] = 0; //removes chest if it's placed underneath bomb spread
     ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_bom_P1, x_bom_P1 - pixel); //draws ground block on the removed chest
 
@@ -857,40 +847,30 @@ void remove_block_P2()
 {
   if (grid[((208 - y_bom_P2) / pixel)][(x_bom_P2 - 80) / pixel] != 1) //spread bomb middle
   {
-    game_over_P1 = 1;
-
     grid[((208 - y_bom_P2) / pixel)][(x_bom_P2 - 80) / pixel] = 0; //removes chest if it's placed underneath bomb spread
     ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_bom_P2, x_bom_P2); //draws ground block on the removed chest
     damage_done_P2 = 0; //makes sure the next bomb will do damage
   }
   if (grid[((208 - y_bom_P2) / pixel) - 1][(x_bom_P2 - 80) / pixel] != 1)//spread up
   {
-    game_over_P1 = 1;
-
     grid[((208 - y_bom_P2) / pixel) - 1][(x_bom_P2 - 80) / pixel] = 0; //removes chest if it's placed underneath bomb spread
     ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_bom_P2 + pixel, x_bom_P2); //draws ground block on the removed chest
     damage_done_P2 = 0; //makes sure the next bomb will do damage
   }
   if (grid[((208 - y_bom_P2) / pixel) + 1][(x_bom_P2 - 80) / pixel] != 1)//spread down
   {
-    game_over_P1 = 1;
-
     grid[((208 - y_bom_P2) / pixel) + 1][(x_bom_P2 - 80) / pixel] = 0; //removes chest if it's placed underneath bomb spread
     ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_bom_P2 - pixel, x_bom_P2); //draws ground block on the removed chest
     damage_done_P2 = 0; //makes sure the next bomb will do damage
   }
   if (grid[((208 - y_bom_P2) / pixel)][((x_bom_P2 - 80) / pixel) + 1] != 1)//spread right
   {
-    game_over_P1 = 1;
-
     grid[((208 - y_bom_P2) / pixel)][((x_bom_P2 - 80) / pixel) + 1] = 0; //removes chest if it's placed underneath bomb spread
     ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_bom_P2, x_bom_P2 + pixel); //draws ground block on the removed chest
     damage_done_P2 = 0; //makes sure the next bomb will do damage
   }
   if (grid[((208 - y_bom_P2) / pixel)][((x_bom_P2 - 80) / pixel) - 1] != 1)//spread left
   {
-    game_over_P1 = 1;
-
     grid[((208 - y_bom_P2) / pixel)][((x_bom_P2 - 80) / pixel) - 1] = 0; //removes chest if it's placed underneath bomb spread
     ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_bom_P2, x_bom_P2 - pixel); //draws ground block on the removed chest
     damage_done_P2 = 0; //makes sure the next bomb will do damage
