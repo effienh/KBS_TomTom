@@ -24,7 +24,7 @@
 #define SPREAD_UP "/bom_spread_up.bmp"
 #define SPREAD_LEFT "/bom_spread_left.bmp"
 #define SPREAD_DOWN "/bom_spread_down.bmp"
-#define EINDSCHERM "/eindscherm_thierry.bmp"
+#define EINDSCHERM "/endscreen.bmp"
 
 #define USE_SD_CARD //which SD card is used
 #define SD_CS   4 // SD card select pin
@@ -399,14 +399,22 @@ int main(void)
 
   while (1)
   {
-    if (nunchuk_read() && (game_over_P1 == 0 || game_over_P2 == 0))
+    if (nunchuk_read() && (game_over_P1 == 0 && game_over_P2 == 0))
     {
       move_P1(); //move functions for PLAYER1
+      move_P2(); //move functions for PLAYER2
 
       ImageReturnCode set = reader.drawBMP(SHADOW , tft, 208, 96);
     }
 
-    move_P2(); //move functions for PLAYER2
+    damage_player_P1();
+    damage_player_P2();
+    
+    if (game_over_P1 || game_over_P2)
+    {
+      endscreen();
+    }
+
   }
 }
 
@@ -502,7 +510,8 @@ void map_setup()
     {
       if (grid[row][column] == 2) //checks if a chest needs to be placed
       {
-        ImageReturnCode chest = reader.drawBMP(KIST, tft, 208 - (row * pixel), 80 + column * pixel); //displayes chest on the LCD
+        //ImageReturnCode chest = reader.drawBMP(KIST, tft, 208 - (row * pixel), 80 + column * pixel); //displayes chest on the LCD
+        grid[row][column] = 0;
       }
     }
   }
@@ -658,7 +667,7 @@ void place_bomb_P2()
 
 void explode_bomb_P1()
 {
-  grid[(208 - y_bom_P1) / pixel][(x_bom_P1 - 80) / pixel] = 0; //remove bomb from the map
+  //grid[(208 - y_bom_P1) / pixel][(x_bom_P1 - 80) / pixel] = 0; //remove bomb from the map
 
   if (grid[((208 - y_bom_P1) / pixel)][(x_bom_P1 - 80) / pixel] != 1)//spread bomb middle
   {
@@ -684,7 +693,7 @@ void explode_bomb_P1()
 
 void explode_bomb_P2()
 {
-  grid[(208 - y_bom_P2) / pixel][(x_bom_P2 - 80) / pixel] = 0; //remove bomb from the map
+  //grid[(208 - y_bom_P2) / pixel][(x_bom_P2 - 80) / pixel] = 0; //remove bomb from the map
 
   if (grid[((208 - y_bom_P2) / pixel)][(x_bom_P2 - 80) / pixel] != 1)//spread bomb middle
   {
@@ -710,63 +719,71 @@ void explode_bomb_P2()
 
 void damage_player_P1()
 {
-  if ((x_bom_P1 == x_waarde_P1 || x_bom_P1 == x_waarde_P1 + pixel || x_bom_P1 == x_waarde_P1 - pixel) && y_bom_P1 == y_waarde_P1 && damage_done_P1 == 0)
-  { //checks if PLAYER1  walks through bomb spread
-    life_P1--;
-    damage_done_P1 = 1; //makes sure the bomb doesn't do damage twice
-  }
-  if (( y_bom_P1 == y_waarde_P1 + pixel || y_bom_P1 == y_waarde_P1 - pixel) && x_bom_P1 == x_waarde_P1 && damage_done_P1 == 0)
+  if (grid[((208 - y_waarde_P1) / pixel)][((x_waarde_P1 - 80) / pixel)] == 3)
   {
-    life_P1--;
-    damage_done_P1 = 1; //makes sure the bomb doesn't do damage twice
+    game_over_P1 = 1;
+  }
+  if (grid[((208 - y_waarde_P1) / pixel)][((x_waarde_P1 - 80) / pixel) - 1] == 3)
+  {
+    game_over_P1 = 1;
+  }
+  if (grid[((208 - y_waarde_P1) / pixel)][((x_waarde_P1 - 80) / pixel) + 1] == 3)
+  {
+    game_over_P1 = 1;
+  }
+  if (grid[((208 - y_waarde_P1) / pixel) - 1][((x_waarde_P1 - 80) / pixel)] == 3)
+  {
+    game_over_P1 = 1;
+  }
+  if (grid[((208 - y_waarde_P1) / pixel) + 1][((x_waarde_P1 - 80) / pixel)] == 3)
+  {
+    game_over_P1 = 1;
   }
 
-  if (life_P1 == 0)
-  {
-    remove_block_P1(); //removes bomb spread
-    game_over_P1 = 1; //stops the game in the while loop
-    //ImageReturnCode stat2 = reader.drawBMP(EINDSCHERM, tft, 0, 0); //end-screen
-    endscreen();
-  }
+
+  //endscreen();
 }
 
 void damage_player_P2()
 {
-  if ((x_bom_P2 == x_waarde_P2 || x_bom_P2 == x_waarde_P2 + pixel || x_bom_P2 == x_waarde_P2 - pixel) && y_bom_P2 == y_waarde_P2 && damage_done_P2 == 0)
-  { //checks if PLAYER2  walks through bomb spread
-    life_P2--;
-    damage_done_P2 = 1; //makes sure the bomb doesn't do damage twice
-  }
-  if (( y_bom_P2 == y_waarde_P2 + pixel || y_bom_P2 == y_waarde_P2 - pixel) && x_bom_P2 == x_waarde_P2 && damage_done_P2 == 0)
+  if (grid[((208 - y_waarde_P2) / pixel)][((x_waarde_P2 - 80) / pixel)] == 3)
   {
-    life_P2--;
-    damage_done_P2 = 1; //makes sure the bomb doesn't do damage twice
+    game_over_P2 = 1;
+  }
+  if (grid[((208 - y_waarde_P2) / pixel)][((x_waarde_P2 - 80) / pixel) - 1] == 3)
+  {
+    game_over_P2 = 1;
+  }
+  if (grid[((208 - y_waarde_P2) / pixel)][((x_waarde_P2 - 80) / pixel) + 1] == 3)
+  {
+    game_over_P1 = 2;
+  }
+  if (grid[((208 - y_waarde_P2) / pixel) - 2][((x_waarde_P2 - 80) / pixel)] == 3)
+  {
+    game_over_P2 = 1;
+  }
+  if (grid[((208 - y_waarde_P2) / pixel) + 1][((x_waarde_P2 - 80) / pixel)] == 3)
+  {
+    game_over_P2 = 1;
   }
 
-  if (life_P2 == 0)
-  {
-    remove_block_P2(); //removes bomb spread
-    game_over_P2 = 1; //stops the game in the while loop
-    //ImageReturnCode stat2 = reader.drawBMP(EINDSCHERM, tft, 0, 0); //end-screen
-    endscreen();
-  }
+
+  //endscreen();
 }
 
 void endscreen()
 {
-  if (game_over_P1 || game_over_P2)
-  {
-    ImageReturnCode stat2 = reader.drawBMP(EINDSCHERM, tft, 0, 0); //end-screen
+  ImageReturnCode stat2 = reader.drawBMP(EINDSCHERM, tft, 0, 0); //end-screen
 
-    if (game_over_P1)
-    {
-      tft.print("YOU LOSE");
-    } else if (game_over_P2)
-    {
-      tft.print("YOU WIN");
-    }
+  if (game_over_P1)
+  {
+    tft.print("YOU LOSE");
+  } else if (game_over_P2)
+  {
+    tft.print("YOU WIN");
   }
 }
+
 
 void remove_block_P1()
 {
@@ -805,6 +822,8 @@ void remove_block_P1()
 
     damage_done_P1 = 0; //makes sure the next bomb will do damage
   }
+
+  grid[(208 - y_bom_P1) / pixel][(x_bom_P1 - 80) / pixel] = 0; //remove bomb from the map
 }
 
 void remove_block_P2()
@@ -828,7 +847,7 @@ void remove_block_P2()
     damage_done_P2 = 0; //makes sure the next bomb will do damage
   }
   if (grid[((208 - y_bom_P2) / pixel)][((x_bom_P2 - 80) / pixel) + 1] != 1)//spread right
-  { 
+  {
     grid[((208 - y_bom_P2) / pixel)][((x_bom_P2 - 80) / pixel) + 1] = 0; //removes chest if it's placed underneath bomb spread
     ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_bom_P2, x_bom_P2 + pixel); //draws ground block on the removed chest
     damage_done_P2 = 0; //makes sure the next bomb will do damage
@@ -839,6 +858,8 @@ void remove_block_P2()
     ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_bom_P2, x_bom_P2 - pixel); //draws ground block on the removed chest
     damage_done_P2 = 0; //makes sure the next bomb will do damage
   }
+
+  grid[(208 - y_bom_P2) / pixel][(x_bom_P2 - 80) / pixel] = 0; //remove bomb from the map
 }
 
 void move_P1()
