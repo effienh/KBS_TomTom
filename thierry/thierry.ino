@@ -746,7 +746,7 @@ void damage_player_P2()
   }
   if (grid[((208 - y_waarde_P2) / pixel)][((x_waarde_P2 - 80) / pixel) + 1] == 4)
   {
-    game_over_P1 = 2;
+    game_over_P2 = 1;
   }
   if (grid[((208 - y_waarde_P2) / pixel) - 2][((x_waarde_P2 - 80) / pixel)] == 4)
   {
