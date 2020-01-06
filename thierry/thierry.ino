@@ -396,7 +396,7 @@ int main(void)
 
   while (1)
   {
-    if (nunchuk_read() && (game_over_P1 == 0 && game_over_P2 == 0))
+    if (nunchuk_read()) //&& (game_over_P1 == 0 && game_over_P2 == 0))
     {
       move_P1(); //move functions for PLAYER1
       move_P2(); //move functions for PLAYER2
@@ -404,13 +404,12 @@ int main(void)
       ImageReturnCode set = reader.drawBMP(SHADOW , tft, 208, 96);
     }
 
-    damage_player_P1();
-    damage_player_P2();
 
-    if (game_over_P1 || game_over_P2)
+
+    /*if (game_over_P1 || game_over_P2)
     {
       endscreen();
-    }
+    }*/
   }
 }
 
@@ -507,8 +506,7 @@ void map_setup()
       if (grid[row][column] == 2) //checks if a chest needs to be placed
 
       {
-        //ImageReturnCode chest = reader.drawBMP(KIST, tft, 208 - (row * pixel), 80 + column * pixel); //displayes chest on the LCD
-        grid[row][column] = 0;
+        ImageReturnCode chest = reader.drawBMP(KIST, tft, 208 - (row * pixel), 80 + column * pixel); //displayes chest on the LCD
       }
     }
   }
