@@ -658,7 +658,7 @@ void place_bomb_P2()
 void explode_bomb_P1()
 {
   //grid[(208 - y_bom_P1) / pixel][(x_bom_P1 - 80) / pixel] = 0; //remove bomb from the map
-  grid[(208 - y_bom_P2) / pixel][(x_bom_P2 - 80) / pixel] = 4;
+  grid[(208 - y_bom_P1) / pixel][(x_bom_P1 - 80) / pixel] = 4;
   if (grid[((208 - y_bom_P1) / pixel)][(x_bom_P1 - 80) / pixel] != 1)//spread bomb middle
   {
     ImageReturnCode explode = reader.drawBMP(SPREAD_MID, tft, y_bom_P1, x_bom_P1); //draw spread on bomb coordinates
