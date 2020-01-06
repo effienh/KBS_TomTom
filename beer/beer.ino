@@ -24,7 +24,8 @@
 #define SPREAD_UP "/bom_spread_up.bmp"
 #define SPREAD_LEFT "/bom_spread_left.bmp"
 #define SPREAD_DOWN "/bom_spread_down.bmp"
-#define EINDSCHERM "/endscreen.bmp"
+#define EINDSCHERM_THIERRY "/endscreen-thierry.bmp"
+#define EINDSCHERM_BEER "/endscreen-beer.bmp"
 
 #define USE_SD_CARD //which SD card is used
 #define SD_CS   4 // SD card select pin
@@ -772,14 +773,12 @@ void damage_player_P2()
 
 void endscreen()
 {
-  ImageReturnCode stat2 = reader.drawBMP(EINDSCHERM, tft, 0, 0); //end-screen
-
   if (game_over_P1)
   {
-    tft.print("YOU LOSE");
+    ImageReturnCode stat3 = reader.drawBMP(EINDSCHERM_THIERRY, tft, 0, 0); //end-screen
   } else if (game_over_P2)
   {
-    tft.print("YOU WIN");
+    ImageReturnCode stat4 = reader.drawBMP(EINDSCHERM_BEER, tft, 0, 0); //end-screen
   }
 }
 
