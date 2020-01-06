@@ -396,7 +396,7 @@ int main(void)
 
   while (1)
   {
-    if (nunchuk_read()) //&& (game_over_P1 == 0 && game_over_P2 == 0))
+    if (nunchuk_read()&& (game_over_P1 == 0 && game_over_P2 == 0))
     {
       move_P1(); //move functions for PLAYER1
       move_P2(); //move functions for PLAYER2
@@ -406,10 +406,10 @@ int main(void)
 
 
 
-    /*if (game_over_P1 || game_over_P2)
+    if (game_over_P1 || game_over_P2)
     {
       endscreen();
-    }*/
+    }
   }
 }
 
@@ -658,7 +658,7 @@ void place_bomb_P2()
 void explode_bomb_P1()
 {
   //grid[(208 - y_bom_P1) / pixel][(x_bom_P1 - 80) / pixel] = 0; //remove bomb from the map
-
+  grid[(208 - y_bom_P2) / pixel][(x_bom_P2 - 80) / pixel] = 4;
   if (grid[((208 - y_bom_P1) / pixel)][(x_bom_P1 - 80) / pixel] != 1)//spread bomb middle
   {
     ImageReturnCode explode = reader.drawBMP(SPREAD_MID, tft, y_bom_P1, x_bom_P1); //draw spread on bomb coordinates
@@ -684,7 +684,7 @@ void explode_bomb_P1()
 void explode_bomb_P2()
 {
   //grid[(208 - y_bom_P2) / pixel][(x_bom_P2 - 80) / pixel] = 0; //remove bomb from the map
-
+  grid[(208 - y_bom_P2) / pixel][(x_bom_P2 - 80) / pixel] = 4;
   if (grid[((208 - y_bom_P2) / pixel)][(x_bom_P2 - 80) / pixel] != 1)//spread bomb middle
   {
     ImageReturnCode explode = reader.drawBMP(SPREAD_MID, tft, y_bom_P2, x_bom_P2); //draw spread on bomb coordinates
@@ -709,23 +709,23 @@ void explode_bomb_P2()
 
 void damage_player_P1()
 {
-  if (grid[((208 - y_waarde_P1) / pixel)][((x_waarde_P1 - 80) / pixel)] == 3)
+  if (grid[((208 - y_waarde_P1) / pixel)][((x_waarde_P1 - 80) / pixel)] == 4)
   {
     game_over_P1 = 1;
   }
-  if (grid[((208 - y_waarde_P1) / pixel)][((x_waarde_P1 - 80) / pixel) - 1] == 3)
+  if (grid[((208 - y_waarde_P1) / pixel)][((x_waarde_P1 - 80) / pixel) - 1] == 4)
   {
     game_over_P1 = 1;
   }
-  if (grid[((208 - y_waarde_P1) / pixel)][((x_waarde_P1 - 80) / pixel) + 1] == 3)
+  if (grid[((208 - y_waarde_P1) / pixel)][((x_waarde_P1 - 80) / pixel) + 1] == 4)
   {
     game_over_P1 = 1;
   }
-  if (grid[((208 - y_waarde_P1) / pixel) - 1][((x_waarde_P1 - 80) / pixel)] == 3)
+  if (grid[((208 - y_waarde_P1) / pixel) - 1][((x_waarde_P1 - 80) / pixel)] == 4)
   {
     game_over_P1 = 1;
   }
-  if (grid[((208 - y_waarde_P1) / pixel) + 1][((x_waarde_P1 - 80) / pixel)] == 3)
+  if (grid[((208 - y_waarde_P1) / pixel) + 1][((x_waarde_P1 - 80) / pixel)] == 4)
   {
     game_over_P1 = 1;
   }
@@ -736,23 +736,23 @@ void damage_player_P1()
 
 void damage_player_P2()
 {
-  if (grid[((208 - y_waarde_P2) / pixel)][((x_waarde_P2 - 80) / pixel)] == 3)
+  if (grid[((208 - y_waarde_P2) / pixel)][((x_waarde_P2 - 80) / pixel)] == 4)
   {
     game_over_P2 = 1;
   }
-  if (grid[((208 - y_waarde_P2) / pixel)][((x_waarde_P2 - 80) / pixel) - 1] == 3)
+  if (grid[((208 - y_waarde_P2) / pixel)][((x_waarde_P2 - 80) / pixel) - 1] == 4)
   {
     game_over_P2 = 1;
   }
-  if (grid[((208 - y_waarde_P2) / pixel)][((x_waarde_P2 - 80) / pixel) + 1] == 3)
+  if (grid[((208 - y_waarde_P2) / pixel)][((x_waarde_P2 - 80) / pixel) + 1] == 4)
   {
     game_over_P1 = 2;
   }
-  if (grid[((208 - y_waarde_P2) / pixel) - 2][((x_waarde_P2 - 80) / pixel)] == 3)
+  if (grid[((208 - y_waarde_P2) / pixel) - 2][((x_waarde_P2 - 80) / pixel)] == 4)
   {
     game_over_P2 = 1;
   }
-  if (grid[((208 - y_waarde_P2) / pixel) + 1][((x_waarde_P2 - 80) / pixel)] == 3)
+  if (grid[((208 - y_waarde_P2) / pixel) + 1][((x_waarde_P2 - 80) / pixel)] == 4)
   {
     game_over_P2 = 1;
   }
