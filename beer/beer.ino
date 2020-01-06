@@ -225,6 +225,7 @@ ISR(TIMER0_COMPA_vect)
   {
     spread_counter_P1++; //leaves the spread for a while
     damage_player_P1();
+    damage_player_P2();
   }
 
   if (spread_counter_P1 >= 1500)
@@ -249,6 +250,7 @@ ISR(TIMER0_COMPA_vect)
   {
     spread_counter_P2++; //leaves the spread for a while
     damage_player_P2();
+    damage_player_P1();
   }
 
   if (spread_counter_P2 >= 1500)
@@ -755,7 +757,7 @@ void damage_player_P2()
   {
     game_over_P2 = 1;
   }
-  if (grid[((208 - y_waarde_P2) / pixel) - 2][((x_waarde_P2 - 80) / pixel)] == 4)
+  if (grid[((208 - y_waarde_P2) / pixel) - 1][((x_waarde_P2 - 80) / pixel)] == 4)
   {
     game_over_P2 = 1;
   }
