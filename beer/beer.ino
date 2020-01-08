@@ -13,6 +13,7 @@
 #include <Adafruit_SPITFT_Macros.h>
 #include <gfxfont.h>
 
+//graphics
 #define PLAYER2 "/thierry.bmp"
 #define PLAYER1 "/beer.bmp"
 #define BOMB "/bom.bmp"
@@ -62,6 +63,7 @@ uint8_t onder_P2;
    1 = borders and walls (non-collisiable)
    2 = chests (collisiable after explosion)
    3 = bomb
+   4 = spread
 */
 uint8_t grid[13][13]
 {
@@ -109,7 +111,7 @@ uint16_t spread_counter_P2;
 uint8_t spread_set_P2;
 uint8_t boom_P2;
 
-//lifes
+//endscreen
 uint8_t game_over_P1 = 0;
 uint8_t life_P1 = 2;
 uint8_t damage_done_P1 = 0;
@@ -135,6 +137,13 @@ void lcd_setup();
 void map_setup();
 void endscreen();
 
+void timer2_setup();
+void PCINT1_setup();
+void setup_pin3();
+
+void timer1_setup();
+void IR_led_setup();
+
 //control functions prototypes
 void move_P1();
 void go_up_P1();
@@ -158,13 +167,15 @@ void damage_player_P2();
 void draw_P2();
 void remove_block_P2();
 
+//IR variables
 int counter1 = 0;
 int counter2 = 0;
 int positie = 7;
 int sent = 0;
 
-uint8_t bytje = 0b00000000;
+uint8_t bytje = 0b00000000; //byte which is send
 
+//IR checks
 int counter = 0;
 int prev_counter = 0;
 int current_counter = 0;
@@ -176,13 +187,6 @@ int falling_edge = 1;
 uint8_t data_correct = 0;
 
 int midden, boven, onder, links, rechts, buttonc;
-
-void timer2_setup();
-void PCINT1_setup();
-void setup_pin3();
-
-void timer1_setup();
-void IR_led_setup();
 
 uint8_t count_interrupt0 = 0;
 
@@ -225,7 +229,7 @@ ISR(TIMER0_COMPA_vect)
   if (spread_set_P1)
   {
     spread_counter_P1++; //leaves the spread for a while
-    damage_player_P1();
+    damage_player_P1(); //damages players
     damage_player_P2();
   }
 
@@ -250,7 +254,7 @@ ISR(TIMER0_COMPA_vect)
   if (spread_set_P2)
   {
     spread_counter_P2++; //leaves the spread for a while
-    damage_player_P2();
+    damage_player_P2(); //damages players
     damage_player_P1();
   }
 
@@ -270,10 +274,10 @@ ISR(TIMER2_COMPA_vect)
 {
   if (~(bytje | ~(1 << positie)))
   {
-    if (counter1 < 100 /*&& !nunchuk_middle*/)
+    if (counter1 < 100)
     {
       counter1++;
-      PORTD ^= (1 << PORTD6);
+      PORTD ^= (1 << PORTD6);//toggles IR led
     }
 
     if (counter1 >= 100)
@@ -284,22 +288,22 @@ ISR(TIMER2_COMPA_vect)
     if (sent)
     {
       counter2++;
-      PORTD &= ~(1 << PORTD6);
+      PORTD &= ~(1 << PORTD6);//sends 1 bit
     }
 
     if (counter2 >= 100)
     {
       counter1 = 0;
       counter2 = 0;
-      positie--;
+      positie--;//moves to next bit
       sent = 0;
     }
   } else
   {
-    if (counter1 < 100 /*&& !nunchuk_middle*/)
+    if (counter1 < 100)
     {
       counter1++;
-      PORTD ^= (1 << PORTD6);
+      PORTD ^= (1 << PORTD6);//toggles IR led
     }
 
     if (counter1 >= 100)
@@ -310,28 +314,28 @@ ISR(TIMER2_COMPA_vect)
     if (sent)
     {
       counter2++;
-      PORTD &= ~(1 << PORTD6);
+      PORTD &= ~(1 << PORTD6);//sends 1 bit
     }
 
     if (counter2 >= 300)
     {
       counter1 = 0;
       counter2 = 0;
-      positie--;
+      positie--;//moves to next bit
       sent = 0;
     }
   }
 
   if (positie == -1)
   {
-    positie = 7;
+    positie = 7;//starts over if position reaches the end
   }
 }
 
 ISR(INT1_vect)
 {
   EICRA ^= (1 << ISC10);
-  count_interrupts++;
+  count_interrupts++;//checks if bit is 1 or 0
   if (falling_edge)
   {
     prev_counter = counter;
@@ -346,12 +350,12 @@ ISR(INT1_vect)
     //Serial.println(difference_counters);
   }
 
-  if (difference_counters >= 380 && difference_counters <= 600 && (count_interrupts % 2 == 0)) //is 1
+  if (difference_counters >= 380 && difference_counters <= 600 && (count_interrupts % 2 == 0)) //bit is 1
   {
     bit_positie--;
     count_interrupts = 0;
-    data_correct++;
-  } else if (difference_counters <= 200 && difference_counters >= 90 && (count_interrupts % 2 == 0)) //is 0
+    data_correct++;//checks what bit is send
+  } else if (difference_counters <= 200 && difference_counters >= 90 && (count_interrupts % 2 == 0)) //bit is 0
   {
     bit_positie--;
     count_interrupts = 0;
@@ -359,22 +363,22 @@ ISR(INT1_vect)
   if (bit_positie < 0)
   {
     bit_positie = 7;
-    if (data_correct == 5)
+    if (data_correct == 5)//0b00000101
     {
       midden++;
-    } else if (data_correct == 1)
+    } else if (data_correct == 1)//0b00000001
     {
       boven++;
-    } else if (data_correct == 2)
+    } else if (data_correct == 2)//0b00000010
     {
       onder++;
-    } else if (data_correct == 3)
+    } else if (data_correct == 3)//0b00000011
     {
       links++;
-    } else if (data_correct == 4)
+    } else if (data_correct == 4)//0b00000100
     {
       rechts++;
-    } else if (data_correct == 0)
+    } else if (data_correct == 0)//0b00000000
     {
       buttonc++;
     }
@@ -386,7 +390,6 @@ ISR(INT1_vect)
 int main(void)
 {
   init();
-  //Serial.begin(9600);
   lcd_setup();
   map_setup();
   setupWire();
@@ -402,7 +405,7 @@ int main(void)
 
   while (1)
   {
-    if (nunchuk_read() && (game_over_P1 == 0 && game_over_P2 == 0))
+    if (nunchuk_read() && (game_over_P1 == 0 && game_over_P2 == 0))//checks if a player has died
     {
       move_P1(); //move functions for PLAYER1
       move_P2(); //move functions for PLAYER2
@@ -413,7 +416,7 @@ int main(void)
   
     if (game_over_P1 || game_over_P2)
     {
-      endscreen();
+      endscreen();//draws endscreen
     }
 
   }
@@ -436,11 +439,11 @@ void timer1_setup()
   TCCR1A = 0; // set entire TCCR1A register to 0
   TCCR1B = 0; // same for TCCR1B
   TCNT1  = 0; // initialize counter value to 0
-  // set compare match register for 37735.84905660377 Hz increments
-  OCR1A = 284; // = 16000000 / (8 * 37735.84905660377) - 1 (must be <256)
+  // set compare match register for 56000 Hz increments
+  OCR1A = 284; // = 16000000 / (8 * 56000) - 1 (must be <256)
   // turn on CTC mode
   TCCR1B |= (1 << WGM12);
-  // Set CS22, CS21 and CS20 bits for 8 prescaler
+  // Set CS10 bits for prescaler
   TCCR1B |= (0 << CS12) | (0 << CS11) | (1 << CS10);
   // enable timer compare interrupt
   TIMSK1 |= (1 << OCIE1A);
@@ -448,7 +451,7 @@ void timer1_setup()
 
 void timer2_setup()
 {
-  // TIMER 2 for interrupt frequency 37735.84905660377 Hz:
+  // TIMER 2 for interrupt frequency 56000 Hz:
   cli(); // stop interrupts
   TCCR2A = 0; // set entire TCCR2A register to 0
   TCCR2B = 0; // same for TCCR2B
@@ -519,7 +522,7 @@ void map_setup()
 
 void go_up_P1()
 {
-  y_waarde_P1 = y_waarde_P1 + pixel;
+  y_waarde_P1 = y_waarde_P1 + pixel;//moves up
   draw_P1();
 
   if (refresh_once_P1 == 0) //is set after a bomb is placed, makes sure the bomb won't be ereased
@@ -533,7 +536,7 @@ void go_up_P1()
 
 void go_right_P1()
 {
-  x_waarde_P1 = x_waarde_P1 + pixel;
+  x_waarde_P1 = x_waarde_P1 + pixel;//moves right
 
   draw_P1();
 
@@ -546,7 +549,7 @@ void go_right_P1()
   }
 }
 
-void go_left_P1()
+void go_left_P1()//moves left
 {
   x_waarde_P1 = x_waarde_P1 - pixel;
 
@@ -561,7 +564,7 @@ void go_left_P1()
   }
 }
 
-void go_down_P1()
+void go_down_P1()//moves down
 {
   y_waarde_P1 = y_waarde_P1 - pixel;
   draw_P1();
@@ -575,14 +578,10 @@ void go_down_P1()
   }
 }
 
-void go_up_P2()
+void go_up_P2()//moves up
 
 {
-
   y_waarde_P2 = y_waarde_P2 + pixel;
-
-
-
   draw_P2();
 
   if (refresh_once_P2 == 0) //is set after a bomb is placed, makes sure the bomb won't be ereased
@@ -596,8 +595,9 @@ void go_up_P2()
 
 void go_right_P2()
 {
-  x_waarde_P2 = x_waarde_P2 + pixel;
+  x_waarde_P2 = x_waarde_P2 + pixel;//moves right
   draw_P2();
+  
   if (refresh_once_P2 == 0) //is set after a bomb is placed, makes sure the bomb won't be ereased
   {
     ImageReturnCode ground_refresh = reader.drawBMP(GROUND, tft, y_waarde_P2, x_waarde_P2 - pixel); //makes sure PLAYER1 won't be printed twice
@@ -609,7 +609,7 @@ void go_right_P2()
 
 void go_left_P2()
 {
-  x_waarde_P2 = x_waarde_P2 - pixel;
+  x_waarde_P2 = x_waarde_P2 - pixel;//moves left
   draw_P2();
 
   if (refresh_once_P2 == 0) //is set after a bomb is placed, makes sure the bomb won't be ereased
@@ -623,7 +623,7 @@ void go_left_P2()
 
 void go_down_P2()
 {
-  y_waarde_P2 = y_waarde_P2 - pixel;
+  y_waarde_P2 = y_waarde_P2 - pixel;//moves down
   draw_P2();
 
   if (refresh_once_P2 == 0) //is set after a bomb is placed, makes sure the bomb won't be ereased
@@ -667,8 +667,7 @@ void place_bomb_P2()
 
 void explode_bomb_P1()
 {
-  //grid[(208 - y_bom_P1) / pixel][(x_bom_P1 - 80) / pixel] = 0; //remove bomb from the map
-  grid[(208 - y_bom_P1) / pixel][(x_bom_P1 - 80) / pixel] = 4;
+  grid[(208 - y_bom_P1) / pixel][(x_bom_P1 - 80) / pixel] = 4;//set spread (after bomb)
   if (grid[((208 - y_bom_P1) / pixel)][(x_bom_P1 - 80) / pixel] != 1)//spread bomb middle
   {
     ImageReturnCode explode = reader.drawBMP(SPREAD_MID, tft, y_bom_P1, x_bom_P1); //draw spread on bomb coordinates
@@ -693,8 +692,7 @@ void explode_bomb_P1()
 
 void explode_bomb_P2()
 {
-  //grid[(208 - y_bom_P2) / pixel][(x_bom_P2 - 80) / pixel] = 0; //remove bomb from the map
-  grid[(208 - y_bom_P2) / pixel][(x_bom_P2 - 80) / pixel] = 4;
+  grid[(208 - y_bom_P2) / pixel][(x_bom_P2 - 80) / pixel] = 4;//set spread (after bomb)
   if (grid[((208 - y_bom_P2) / pixel)][(x_bom_P2 - 80) / pixel] != 1)//spread bomb middle
   {
     ImageReturnCode explode = reader.drawBMP(SPREAD_MID, tft, y_bom_P2, x_bom_P2); //draw spread on bomb coordinates
@@ -719,64 +717,58 @@ void explode_bomb_P2()
 
 void damage_player_P1()
 {
-  if (grid[((208 - y_waarde_P1) / pixel)][((x_waarde_P1 - 80) / pixel)] == 4)
+  if (grid[((208 - y_waarde_P1) / pixel)][((x_waarde_P1 - 80) / pixel)] == 4) //checks if player is on spread coördinates
   {
-    game_over_P1 = 1;
+    game_over_P1 = 1;//player 2 wins
   }
-  if (grid[((208 - y_waarde_P1) / pixel)][((x_waarde_P1 - 80) / pixel) - 1] == 4)
+  if (grid[((208 - y_waarde_P1) / pixel)][((x_waarde_P1 - 80) / pixel) - 1] == 4) //checks if player is on spread coördinates
   {
-    game_over_P1 = 1;
+    game_over_P1 = 1;//player 2 wins
   }
-  if (grid[((208 - y_waarde_P1) / pixel)][((x_waarde_P1 - 80) / pixel) + 1] == 4)
+  if (grid[((208 - y_waarde_P1) / pixel)][((x_waarde_P1 - 80) / pixel) + 1] == 4) //checks if player is on spread coördinates
   {
-    game_over_P1 = 1;
+    game_over_P1 = 1;//player 2 wins
   }
-  if (grid[((208 - y_waarde_P1) / pixel) - 1][((x_waarde_P1 - 80) / pixel)] == 4)
+  if (grid[((208 - y_waarde_P1) / pixel) - 1][((x_waarde_P1 - 80) / pixel)] == 4) //checks if player is on spread coördinates
   {
-    game_over_P1 = 1;
+    game_over_P1 = 1;//player 2 wins
   }
-  if (grid[((208 - y_waarde_P1) / pixel) + 1][((x_waarde_P1 - 80) / pixel)] == 4)
+  if (grid[((208 - y_waarde_P1) / pixel) + 1][((x_waarde_P1 - 80) / pixel)] == 4) //checks if player is on spread coördinates
   {
-    game_over_P1 = 1;
+    game_over_P1 = 1;//player 2 wins
   }
-
-
-  //endscreen();
 }
 
 void damage_player_P2()
 {
-  if (grid[((208 - y_waarde_P2) / pixel)][((x_waarde_P2 - 80) / pixel)] == 4)
+  if (grid[((208 - y_waarde_P2) / pixel)][((x_waarde_P2 - 80) / pixel)] == 4) //checks if player is on spread coördinates
   {
-    game_over_P2 = 1;
+    game_over_P2 = 1;//player 1 wins
   }
-  if (grid[((208 - y_waarde_P2) / pixel)][((x_waarde_P2 - 80) / pixel) - 1] == 4)
+  if (grid[((208 - y_waarde_P2) / pixel)][((x_waarde_P2 - 80) / pixel) - 1] == 4) //checks if player is on spread coördinates
   {
-    game_over_P2 = 1;
+    game_over_P2 = 1;//player 1 wins
   }
-  if (grid[((208 - y_waarde_P2) / pixel)][((x_waarde_P2 - 80) / pixel) + 1] == 4)
+  if (grid[((208 - y_waarde_P2) / pixel)][((x_waarde_P2 - 80) / pixel) + 1] == 4) //checks if player is on spread coördinates
   {
-    game_over_P2 = 1;
+    game_over_P2 = 1;//player 1 wins
   }
-  if (grid[((208 - y_waarde_P2) / pixel) - 1][((x_waarde_P2 - 80) / pixel)] == 4)
+  if (grid[((208 - y_waarde_P2) / pixel) - 1][((x_waarde_P2 - 80) / pixel)] == 4) //checks if player is on spread coördinates
   {
-    game_over_P2 = 1;
+    game_over_P2 = 1;//player 1 wins
   }
-  if (grid[((208 - y_waarde_P2) / pixel) + 1][((x_waarde_P2 - 80) / pixel)] == 4)
+  if (grid[((208 - y_waarde_P2) / pixel) + 1][((x_waarde_P2 - 80) / pixel)] == 4) //checks if player is on spread coördinates
   {
-    game_over_P2 = 1;
+    game_over_P2 = 1;//player 1 wins
   }
-
-
-  //endscreen();
 }
 
 void endscreen()
 {
-  if (game_over_P1)
+  if (game_over_P1)//checks if player 1 died
   {
     ImageReturnCode stat3 = reader.drawBMP(EINDSCHERM_THIERRY, tft, 0, 0); //end-screen
-  } else if (game_over_P2)
+  } else if (game_over_P2)//checks if player 2 died
   {
     ImageReturnCode stat4 = reader.drawBMP(EINDSCHERM_BEER, tft, 0, 0); //end-screen
   }
@@ -949,50 +941,44 @@ void move_P1()
 void move_P2()
 {
 
-  if (midden > 2)
+  if (midden > 2) //reads out middle in ISR
   {
-    //Serial.println("MIDDLE");
     midden = 0;
   }
-  if (boven > 2)
+  if (boven > 2)//reads out up in ISR (IR)
   {
     if (!grid[((208 - y_waarde_P2) / pixel) - 1][(x_waarde_P2 - 80) / pixel]) //player can't move over borders, walls, bombs or chests
     {
-      //Serial.println("UP");
       go_up_P2();
     }
     boven = 0;
   }
-  if (onder > 2)
+  if (onder > 2)//reads out down in ISR (IR)
   {
     if (!grid[((208 - y_waarde_P2) / pixel) + 1][(x_waarde_P2 - 80) / pixel]) //player can't move over borders, walls, bombs or chests
     {
-      //Serial.println("DOWN");
       go_down_P2();
     }
     onder = 0;
   }
-  if (links > 2)
+  if (links > 2)//reads out left in ISR (IR)
   {
     if (!grid[((208 - y_waarde_P2) / pixel)][((x_waarde_P2 - 80) / pixel) - 1]) //player can't move over borders, walls, bombs or chests
     {
-      //Serial.println("LEFT");
       go_left_P2();
     }
     links = 0;
   }
-  if (rechts > 2)
+  if (rechts > 2)//reads out right in ISR (IR)
   {
     if (!grid[((208 - y_waarde_P2) / pixel)][((x_waarde_P2 - 80) / pixel) + 1]) //player can't move over borders, walls, bombs or chests
     {
-      //Serial.println("RIGHT");
       go_right_P2();
     }
     rechts = 0;
   }
-  if (buttonc > 2)
+  if (buttonc > 2)//reads out button C in ISR (IR)
   {
-    //Serial.println("BUTTONC");
     buttonc = 0;
 
     if (bomb_set_P2 == 0 && spread_set_P2 == 0) //makes sure a player can only place one bomb at a time
@@ -1007,7 +993,7 @@ void move_P2()
     first_P2 = 1;
   }
 
-  if (bomb_set_P2 == 0 && ground_once_P2 == 1)
+  if (bomb_set_P2 == 0 && ground_once_P2 == 1)//checks if only one bomb is set at a time
   {
     bomb_counter_P2 = 0;
     ImageReturnCode remove_bomb = reader.drawBMP(GROUND, tft, y_bom_P2, x_bom_P2); //removes the bomb by replacing it with a ground block
@@ -1022,7 +1008,6 @@ void move_P2()
 
   if (boom_P2) //is set when spread_counter reaches 8
   {
-    //Serial.println("boomb");
     remove_block_P2(); //removes the spread from the map
     boom_P2 = 0;
     spread_set_P2 = 0;
